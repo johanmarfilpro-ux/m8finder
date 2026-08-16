@@ -1,23 +1,21 @@
-import { GAME_ROLES } from '../../data/constants.js';
-
-export default function GameRolesPicker({ value, onChange }) {
-  function toggleRole(roleValue) {
-    if (value.includes(roleValue)) {
-      onChange(value.filter((role) => role !== roleValue));
+export default function ChipMultiSelect({ options, value, onChange }) {
+  function toggleOption(optionValue) {
+    if (value.includes(optionValue)) {
+      onChange(value.filter((v) => v !== optionValue));
     } else {
-      onChange([...value, roleValue]);
+      onChange([...value, optionValue]);
     }
   }
 
   return (
     <div className="flex flex-wrap gap-2">
-      {GAME_ROLES.map((role) => {
-        const isSelected = value.includes(role.value);
+      {options.map((option) => {
+        const isSelected = value.includes(option.value);
         return (
           <button
-            key={role.value}
+            key={option.value}
             type="button"
-            onClick={() => toggleRole(role.value)}
+            onClick={() => toggleOption(option.value)}
             aria-pressed={isSelected}
             className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
               isSelected
@@ -25,7 +23,7 @@ export default function GameRolesPicker({ value, onChange }) {
                 : 'border-surface-border bg-surface-soft text-slate-400 hover:text-slate-200'
             }`}
           >
-            {role.label}
+            {option.label}
           </button>
         );
       })}

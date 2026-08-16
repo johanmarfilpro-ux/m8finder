@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import {
+  GAME_ROLES,
   RANK_TIERS,
   RANK_DIVISIONS,
   RANKS_WITHOUT_DIVISION,
 } from '../../data/constants.js';
 import Button from '../common/Button.jsx';
 import FormField, { inputClassName } from '../common/FormField.jsx';
-import GameRolesPicker from './GameRolesPicker.jsx';
+import ChipMultiSelect from '../common/ChipMultiSelect.jsx';
 
 const emptyProfile = {
   displayName: '',
@@ -73,7 +74,8 @@ export default function ProfileForm({ initialProfile, onSubmit, isSubmitting }) 
       </FormField>
 
       <FormField label="Roles" hint="Selectionne tous les roles que tu joues.">
-        <GameRolesPicker
+        <ChipMultiSelect
+          options={GAME_ROLES}
           value={formState.gameRoles}
           onChange={(gameRoles) => setFormState((prev) => ({ ...prev, gameRoles }))}
         />

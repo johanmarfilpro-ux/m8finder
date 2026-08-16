@@ -17,13 +17,20 @@ export default function SearchPage() {
     return listPlayerProfiles()
       .map(({ profile }) => profile)
       .filter((profile) => profile.userId !== currentUser.id)
-      .filter((profile) => filters.gameRole === 'TOUS' || profile.gameRoles.includes(filters.gameRole))
-      .filter((profile) => filters.rankTier === 'TOUS' || profile.rankTier === filters.rankTier)
+      .filter(
+        (profile) =>
+          filters.gameRoles.length === 0 ||
+          filters.gameRoles.some((role) => profile.gameRoles.includes(role))
+      )
+      .filter((profile) => filters.rankTiers.length === 0 || filters.rankTiers.includes(profile.rankTier))
       .filter((profile) => !filters.onlyAvailable || profile.isAvailable);
   }, [listPlayerProfiles, currentUser.id, filters]);
 
   async function handleCreateAlert() {
-    const roleLabel = filters.gameRole === 'TOUS' ? 'tous roles' : getGameRoleLabel(filters.gameRole);
+    const roleLabel =
+      filters.gameRoles.length === 0
+        ? 'tous roles'
+        : filters.gameRoles.map(getGameRoleLabel).join(', ');
     try {
       await addNotification({
         userId: currentUser.id,
