@@ -11,5 +11,7 @@ export default function FormField({ label, htmlFor, error, hint, children }) {
   );
 }
 
+// text-base (16px) sur mobile pour eviter le zoom automatique iOS/Android
+// au focus d'un champ ; retour a text-sm (14px) a partir du breakpoint sm.
 export const inputClassName =
-  'w-full rounded-lg border border-surface-border bg-surface-soft px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
+  'w-full rounded-lg border border-surface-border bg-surface-soft px-3 py-2 text-base sm:text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
