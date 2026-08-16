@@ -17,13 +17,9 @@ export default function SearchPage() {
     return listPlayerProfiles()
       .map(({ profile }) => profile)
       .filter((profile) => profile.userId !== currentUser.id)
-      .filter((profile) => filters.gameRole === 'TOUS' || profile.gameRole === filters.gameRole)
+      .filter((profile) => filters.gameRole === 'TOUS' || profile.gameRoles.includes(filters.gameRole))
       .filter((profile) => filters.rankTier === 'TOUS' || profile.rankTier === filters.rankTier)
-      .filter(
-        (profile) =>
-          filters.availability.length === 0 ||
-          filters.availability.some((slot) => profile.availability.includes(slot))
-      );
+      .filter((profile) => !filters.onlyAvailable || profile.isAvailable);
   }, [listPlayerProfiles, currentUser.id, filters]);
 
   async function handleCreateAlert() {

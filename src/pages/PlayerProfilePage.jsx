@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useDatabase } from '../hooks/useDatabase.js';
 import { useToast } from '../hooks/useToast.js';
-import { getAvailabilityLabel, getGameRoleLabel, getRankLabel } from '../data/constants.js';
+import { getGameRoleLabel, getRankLabel } from '../data/constants.js';
 import Badge from '../components/common/Badge.jsx';
 import Button from '../components/common/Button.jsx';
 import ContactPlayerModal from '../components/profile/ContactPlayerModal.jsx';
@@ -12,13 +12,14 @@ import ReportProfileModal from '../components/profile/ReportProfileModal.jsx';
 export default function PlayerProfilePage() {
   const { userId } = useParams();
   const { currentUser } = useAuth();
-  const { getProfileByUserId, createReport } = useDatabase();
+  const { getProfileByUserId, createReport, isUserAdmin } = useDatabase();
   const { showToast } = useToast();
 
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   const profile = getProfileByUserId(userId);
+  const isProfileAdmin = isUserAdmin(userId);
 
   if (!profile) {
     return (
@@ -50,21 +51,27 @@ export default function PlayerProfilePage() {
       <div className="rounded-xl border border-surface-border bg-surface-soft p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">{profile.displayName}</h1>
+            <h1 className={`text-2xl font-bold ${isProfileAdmin ? 'text-orange-400' : 'text-slate-100'}`}>
+              {isProfileAdmin && '[ADMIN] '}
+              {profile.displayName}
+            </h1>
             <p className="text-sm text-slate-500">{profile.riotId}</p>
           </div>
-          <Badge tone="brand" className="text-sm">
-            {getGameRoleLabel(profile.gameRole)}
-          </Badge>
+          {profile.isAvailable && (
+            <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              Disponible maintenant
+            </span>
+          )}
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <Badge tone="success">{getRankLabel(profile.rankTier, profile.rankDivision)}</Badge>
-          {profile.availability.map((slot) => (
-            <Badge key={slot} tone="neutral">
-              {getAvailabilityLabel(slot)}
+          {profile.gameRoles.map((role) => (
+            <Badge key={role} tone="brand">
+              {getGameRoleLabel(role)}
             </Badge>
           ))}
+          <Badge tone="success">{getRankLabel(profile.rankTier, profile.rankDivision)}</Badge>
         </div>
 
         <p className="mt-6 whitespace-pre-line text-sm text-slate-300">
@@ -75,9 +82,11 @@ export default function PlayerProfilePage() {
           <Button variant="primary" onClick={() => setIsContactOpen(true)}>
             Contacter
           </Button>
-          <Button variant="danger" onClick={() => setIsReportOpen(true)}>
-            Signaler ce profil
-          </Button>
+          {!isProfileAdmin && (
+            <Button variant="danger" onClick={() => setIsReportOpen(true)}>
+              Signaler ce profil
+            </Button>
+          )}
         </div>
       </div>
 

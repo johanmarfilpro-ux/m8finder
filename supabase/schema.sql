@@ -65,18 +65,22 @@ returns boolean as $$
 $$ language sql security definer stable set search_path = public;
 
 -- ---------------------------------------------------------------------
--- 3. Profils joueur (role d'agent, rang, disponibilites...)
+-- 3. Profils joueur (roles d'agent, rang, disponibilite en direct...)
 -- ---------------------------------------------------------------------
 create table if not exists public.profiles (
   user_id uuid primary key references auth.users (id) on delete cascade,
   display_name text not null,
   riot_id text not null,
-  game_role text not null check (game_role in ('DUELIST', 'INITIATOR', 'CONTROLLER', 'SENTINEL')),
+  game_roles text[] not null default '{}' check (
+    game_roles <@ array['DUELIST', 'INITIATOR', 'CONTROLLER', 'SENTINEL']
+  ),
   rank_tier text not null check (
     rank_tier in ('FER', 'BRONZE', 'ARGENT', 'OR', 'PLATINE', 'DIAMANT', 'ASCENDANT', 'IMMORTEL', 'RADIANT')
   ),
   rank_division text check (rank_division in ('1', '2', '3') or rank_division is null),
-  availability text[] not null default '{}',
+  -- Statut "disponible maintenant" bascule depuis la barre de navigation,
+  -- plutot qu'une liste de creneaux horaires declares a l'avance.
+  is_available boolean not null default false,
   bio text not null default '',
   discord_tag text not null default '',
   updated_at timestamptz not null default now()
@@ -127,14 +131,15 @@ drop policy if exists "account_status_update_admin_only" on public.account_statu
 create policy "account_status_update_admin_only" on public.account_status
   for update using (public.is_admin());
 
--- admins : un utilisateur peut verifier s'il figure lui-meme dans la
--- liste (pour afficher/masquer le menu Administration) ; un admin peut
--- voir la liste complete (pour exclure les autres admins de la gestion
--- des comptes joueurs). Aucune ecriture n'est autorisee depuis l'app.
+-- admins : lisible par tout utilisateur connecte (necessaire pour afficher
+-- le badge [ADMIN] dans la recherche et empecher le signalement d'un
+-- admin cote interface). Aucune ecriture n'est autorisee depuis l'app :
+-- cette table ne se modifie qu'a la main depuis le SQL Editor / dashboard.
 drop policy if exists "admins_select_self" on public.admins;
 drop policy if exists "admins_select_self_or_admin" on public.admins;
-create policy "admins_select_self_or_admin" on public.admins
-  for select using (auth.uid() = user_id or public.is_admin());
+drop policy if exists "admins_select_authenticated" on public.admins;
+create policy "admins_select_authenticated" on public.admins
+  for select using (auth.role() = 'authenticated');
 
 -- app_users : reserve aux admins (moderation) et a l'utilisateur pour
 -- son propre enregistrement. N'est jamais lu par les pages joueur
@@ -157,11 +162,15 @@ drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_update_own" on public.profiles
   for update using (auth.uid() = user_id);
 
--- reports : un joueur peut creer un signalement en son nom ; seuls les
--- admins peuvent les consulter et les traiter.
+-- reports : un joueur peut creer un signalement en son nom, sauf contre un
+-- compte admin (verrou cote base, en plus du controle cote interface) ;
+-- seuls les admins peuvent les consulter et les traiter.
 drop policy if exists "reports_insert_own" on public.reports;
 create policy "reports_insert_own" on public.reports
-  for insert with check (auth.uid() = reporter_id);
+  for insert with check (
+    auth.uid() = reporter_id
+    and not exists (select 1 from public.admins a where a.user_id = reported_user_id)
+  );
 
 drop policy if exists "reports_select_admin_only" on public.reports;
 create policy "reports_select_admin_only" on public.reports

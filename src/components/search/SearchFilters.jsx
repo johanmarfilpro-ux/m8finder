@@ -1,8 +1,7 @@
 import { GAME_ROLES, RANK_TIERS } from '../../data/constants.js';
 import { inputClassName } from '../common/FormField.jsx';
-import AvailabilityPicker from '../profile/AvailabilityPicker.jsx';
 
-export const DEFAULT_FILTERS = { gameRole: 'TOUS', rankTier: 'TOUS', availability: [] };
+export const DEFAULT_FILTERS = { gameRole: 'TOUS', rankTier: 'TOUS', onlyAvailable: false };
 
 export default function SearchFilters({ filters, onChange }) {
   function updateFilter(field, fieldValue) {
@@ -49,13 +48,15 @@ export default function SearchFilters({ filters, onChange }) {
         </label>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-slate-300">Disponibilite</span>
-        <AvailabilityPicker
-          value={filters.availability}
-          onChange={(availability) => updateFilter('availability', availability)}
+      <label className="flex items-center gap-2 text-sm text-slate-300">
+        <input
+          type="checkbox"
+          checked={filters.onlyAvailable}
+          onChange={(event) => updateFilter('onlyAvailable', event.target.checked)}
+          className="h-4 w-4 rounded border-surface-border bg-surface-soft text-brand-500 focus:ring-1 focus:ring-brand-500"
         />
-      </div>
+        Uniquement les joueurs disponibles maintenant
+      </label>
     </div>
   );
 }

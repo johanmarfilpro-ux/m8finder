@@ -10,10 +10,10 @@ function mapProfileRow(row) {
     userId: row.user_id,
     displayName: row.display_name,
     riotId: row.riot_id,
-    gameRole: row.game_role,
+    gameRoles: row.game_roles ?? [],
     rankTier: row.rank_tier,
     rankDivision: row.rank_division,
-    availability: row.availability ?? [],
+    isAvailable: row.is_available ?? false,
     bio: row.bio ?? '',
     discordTag: row.discord_tag ?? '',
     updatedAt: row.updated_at,
@@ -48,6 +48,7 @@ export function DatabaseProvider({ children }) {
   const [reports, setReports] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [accountStatusByUserId, setAccountStatusByUserId] = useState({});
+  const [adminUserIds, setAdminUserIds] = useState([]);
 
   const refreshProfiles = useCallback(async () => {
     const { data, error } = await supabase.from('profiles').select('*');
@@ -69,6 +70,15 @@ export function DatabaseProvider({ children }) {
       map[row.user_id] = row.status;
     });
     setAccountStatusByUserId(map);
+  }, []);
+
+  const refreshAdminUserIds = useCallback(async () => {
+    const { data, error } = await supabase.from('admins').select('user_id');
+    if (error) {
+      console.error('Erreur chargement des administrateurs', error);
+      return;
+    }
+    setAdminUserIds(data.map((row) => row.user_id));
   }, []);
 
   const refreshReports = useCallback(async () => {
@@ -108,11 +118,13 @@ export function DatabaseProvider({ children }) {
     if (!currentUser) {
       setProfiles([]);
       setAccountStatusByUserId({});
+      setAdminUserIds([]);
       return;
     }
     refreshProfiles();
     refreshStatuses();
-  }, [currentUser, refreshProfiles, refreshStatuses]);
+    refreshAdminUserIds();
+  }, [currentUser, refreshProfiles, refreshStatuses, refreshAdminUserIds]);
 
   useEffect(() => {
     refreshReports();
@@ -127,21 +139,35 @@ export function DatabaseProvider({ children }) {
     [profiles]
   );
 
+  const isUserAdmin = useCallback((userId) => adminUserIds.includes(userId), [adminUserIds]);
+
   const upsertProfile = useCallback(
     async (profileData) => {
       const row = {
         user_id: profileData.userId,
         display_name: profileData.displayName,
         riot_id: profileData.riotId,
-        game_role: profileData.gameRole,
+        game_roles: profileData.gameRoles,
         rank_tier: profileData.rankTier,
         rank_division: profileData.rankDivision,
-        availability: profileData.availability,
+        is_available: profileData.isAvailable,
         bio: profileData.bio,
         discord_tag: profileData.discordTag,
         updated_at: new Date().toISOString(),
       };
       const { error } = await supabase.from('profiles').upsert(row);
+      if (error) throw new Error(error.message);
+      await refreshProfiles();
+    },
+    [refreshProfiles]
+  );
+
+  const setAvailability = useCallback(
+    async (userId, isAvailable) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_available: isAvailable, updated_at: new Date().toISOString() })
+        .eq('user_id', userId);
       if (error) throw new Error(error.message);
       await refreshProfiles();
     },
@@ -156,6 +182,9 @@ export function DatabaseProvider({ children }) {
 
   const createReport = useCallback(
     async ({ reporterId, reportedUserId, reason, details }) => {
+      if (isUserAdmin(reportedUserId)) {
+        throw new Error('Les comptes administrateurs ne peuvent pas etre signales.');
+      }
       const { error } = await supabase.from('reports').insert({
         reporter_id: reporterId,
         reported_user_id: reportedUserId,
@@ -165,7 +194,7 @@ export function DatabaseProvider({ children }) {
       if (error) throw new Error(error.message);
       await refreshReports();
     },
-    [refreshReports]
+    [refreshReports, isUserAdmin]
   );
 
   const updateReportStatus = useCallback(
@@ -228,8 +257,11 @@ export function DatabaseProvider({ children }) {
       reports,
       notifications,
       accountStatusByUserId,
+      adminUserIds,
+      isUserAdmin,
       getProfileByUserId,
       upsertProfile,
+      setAvailability,
       listPlayerProfiles,
       createReport,
       updateReportStatus,
@@ -244,8 +276,11 @@ export function DatabaseProvider({ children }) {
       reports,
       notifications,
       accountStatusByUserId,
+      adminUserIds,
+      isUserAdmin,
       getProfileByUserId,
       upsertProfile,
+      setAvailability,
       listPlayerProfiles,
       createReport,
       updateReportStatus,

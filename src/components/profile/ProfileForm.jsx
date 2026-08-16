@@ -1,27 +1,27 @@
 import { useState } from 'react';
 import {
-  GAME_ROLES,
   RANK_TIERS,
   RANK_DIVISIONS,
   RANKS_WITHOUT_DIVISION,
 } from '../../data/constants.js';
 import Button from '../common/Button.jsx';
 import FormField, { inputClassName } from '../common/FormField.jsx';
-import AvailabilityPicker from './AvailabilityPicker.jsx';
+import GameRolesPicker from './GameRolesPicker.jsx';
 
 const emptyProfile = {
   displayName: '',
   riotId: '',
-  gameRole: GAME_ROLES[0].value,
+  gameRoles: [],
   rankTier: RANK_TIERS[0].value,
   rankDivision: RANK_DIVISIONS[0],
-  availability: [],
+  isAvailable: false,
   bio: '',
   discordTag: '',
 };
 
 export default function ProfileForm({ initialProfile, onSubmit, isSubmitting }) {
   const [formState, setFormState] = useState({ ...emptyProfile, ...initialProfile });
+  const [validationError, setValidationError] = useState('');
 
   const requiresDivision = !RANKS_WITHOUT_DIVISION.includes(formState.rankTier);
 
@@ -31,6 +31,11 @@ export default function ProfileForm({ initialProfile, onSubmit, isSubmitting }) 
 
   function handleSubmit(event) {
     event.preventDefault();
+    if (formState.gameRoles.length === 0) {
+      setValidationError('Selectionne au moins un role.');
+      return;
+    }
+    setValidationError('');
     onSubmit({
       ...formState,
       rankDivision: requiresDivision ? formState.rankDivision : null,
@@ -67,37 +72,27 @@ export default function ProfileForm({ initialProfile, onSubmit, isSubmitting }) 
         />
       </FormField>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField label="Role" htmlFor="gameRole">
-          <select
-            id="gameRole"
-            className={inputClassName}
-            value={formState.gameRole}
-            onChange={updateField('gameRole')}
-          >
-            {GAME_ROLES.map((role) => (
-              <option key={role.value} value={role.value}>
-                {role.label}
-              </option>
-            ))}
-          </select>
-        </FormField>
+      <FormField label="Roles" hint="Selectionne tous les roles que tu joues.">
+        <GameRolesPicker
+          value={formState.gameRoles}
+          onChange={(gameRoles) => setFormState((prev) => ({ ...prev, gameRoles }))}
+        />
+      </FormField>
 
-        <FormField label="Rang" htmlFor="rankTier">
-          <select
-            id="rankTier"
-            className={inputClassName}
-            value={formState.rankTier}
-            onChange={updateField('rankTier')}
-          >
-            {RANK_TIERS.map((tier) => (
-              <option key={tier.value} value={tier.value}>
-                {tier.label}
-              </option>
-            ))}
-          </select>
-        </FormField>
-      </div>
+      <FormField label="Rang" htmlFor="rankTier">
+        <select
+          id="rankTier"
+          className={inputClassName}
+          value={formState.rankTier}
+          onChange={updateField('rankTier')}
+        >
+          {RANK_TIERS.map((tier) => (
+            <option key={tier.value} value={tier.value}>
+              {tier.label}
+            </option>
+          ))}
+        </select>
+      </FormField>
 
       {requiresDivision && (
         <FormField label="Division" htmlFor="rankDivision">
@@ -115,13 +110,6 @@ export default function ProfileForm({ initialProfile, onSubmit, isSubmitting }) 
           </select>
         </FormField>
       )}
-
-      <FormField label="Disponibilites" hint="Selectionne tous les creneaux qui te correspondent.">
-        <AvailabilityPicker
-          value={formState.availability}
-          onChange={(availability) => setFormState((prev) => ({ ...prev, availability }))}
-        />
-      </FormField>
 
       <FormField label="Discord" htmlFor="discordTag" hint="Utilise pour que les autres joueurs te contactent.">
         <input
@@ -144,6 +132,8 @@ export default function ProfileForm({ initialProfile, onSubmit, isSubmitting }) 
           placeholder="Ton style de jeu, tes objectifs, ce que tu recherches chez un coequipier..."
         />
       </FormField>
+
+      {validationError && <p className="text-sm text-red-400">{validationError}</p>}
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? 'Enregistrement...' : 'Enregistrer mon profil'}

@@ -23,14 +23,6 @@ export const RANKS_WITHOUT_DIVISION = ['RADIANT'];
 
 export const RANK_DIVISIONS = ['1', '2', '3'];
 
-export const AVAILABILITY_SLOTS = [
-  { value: 'MATIN', label: 'Matin' },
-  { value: 'APRES_MIDI', label: 'Apres-midi' },
-  { value: 'SOIR', label: 'Soir' },
-  { value: 'NUIT', label: 'Nuit' },
-  { value: 'WEEKEND', label: 'Week-end' },
-];
-
 export const ACCOUNT_STATUS = {
   ACTIVE: 'ACTIF',
   SUSPENDED: 'SUSPENDU',
@@ -61,8 +53,4 @@ export function getRankLabel(tier, division) {
 
 export function getGameRoleLabel(role) {
   return GAME_ROLES.find((r) => r.value === role)?.label ?? role;
-}
-
-export function getAvailabilityLabel(slot) {
-  return AVAILABILITY_SLOTS.find((s) => s.value === slot)?.label ?? slot;
 }

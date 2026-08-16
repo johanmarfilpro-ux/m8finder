@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { useToast } from '../hooks/useToast.js';
 import Button from '../components/common/Button.jsx';
 import FormField, { inputClassName } from '../components/common/FormField.jsx';
+import PasswordInput from '../components/common/PasswordInput.jsx';
 
 const initialFormState = { username: '', email: '', password: '', confirmPassword: '' };
 
@@ -86,11 +87,9 @@ export default function RegisterPage() {
         </FormField>
 
         <FormField label="Mot de passe" htmlFor="password" hint="6 caracteres minimum.">
-          <input
+          <PasswordInput
             id="password"
-            type="password"
             required
-            className={inputClassName}
             value={formState.password}
             onChange={updateField('password')}
             autoComplete="new-password"
@@ -98,11 +97,9 @@ export default function RegisterPage() {
         </FormField>
 
         <FormField label="Confirmer le mot de passe" htmlFor="confirmPassword">
-          <input
+          <PasswordInput
             id="confirmPassword"
-            type="password"
             required
-            className={inputClassName}
             value={formState.confirmPassword}
             onChange={updateField('confirmPassword')}
             autoComplete="new-password"

@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
 import Button from '../common/Button.jsx';
 import NotificationBell from './NotificationBell.jsx';
+import AvailabilityToggle from './AvailabilityToggle.jsx';
 
 const linkClassName = ({ isActive }) =>
   `rounded-lg px-3 py-2 text-sm font-medium transition ${
@@ -44,6 +45,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
+              <AvailabilityToggle />
               <NotificationBell />
               <span className="hidden text-sm text-slate-400 sm:inline">{currentUser.username}</span>
               <Button variant="ghost" onClick={handleLogout}>

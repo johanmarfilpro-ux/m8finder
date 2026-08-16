@@ -1,23 +1,23 @@
-import { AVAILABILITY_SLOTS } from '../../data/constants.js';
+import { GAME_ROLES } from '../../data/constants.js';
 
-export default function AvailabilityPicker({ value, onChange }) {
-  function toggleSlot(slotValue) {
-    if (value.includes(slotValue)) {
-      onChange(value.filter((slot) => slot !== slotValue));
+export default function GameRolesPicker({ value, onChange }) {
+  function toggleRole(roleValue) {
+    if (value.includes(roleValue)) {
+      onChange(value.filter((role) => role !== roleValue));
     } else {
-      onChange([...value, slotValue]);
+      onChange([...value, roleValue]);
     }
   }
 
   return (
     <div className="flex flex-wrap gap-2">
-      {AVAILABILITY_SLOTS.map((slot) => {
-        const isSelected = value.includes(slot.value);
+      {GAME_ROLES.map((role) => {
+        const isSelected = value.includes(role.value);
         return (
           <button
-            key={slot.value}
+            key={role.value}
             type="button"
-            onClick={() => toggleSlot(slot.value)}
+            onClick={() => toggleRole(role.value)}
             aria-pressed={isSelected}
             className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
               isSelected
@@ -25,7 +25,7 @@ export default function AvailabilityPicker({ value, onChange }) {
                 : 'border-surface-border bg-surface-soft text-slate-400 hover:text-slate-200'
             }`}
           >
-            {slot.label}
+            {role.label}
           </button>
         );
       })}
