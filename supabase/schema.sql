@@ -41,6 +41,17 @@ begin
   )
   on conflict (id) do nothing;
 
+  -- Profil de compte minimal cree automatiquement (nom affiche = pseudo) :
+  -- sans lui, des fonctionnalites comme le toggle de disponibilite dans la
+  -- navbar n'ont rien a afficher tant que l'utilisateur n'a jamais soumis
+  -- le formulaire de profil sur /profil.
+  insert into public.profiles (user_id, display_name)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data ->> 'username', split_part(new.email, '@', 1))
+  )
+  on conflict (user_id) do nothing;
+
   return new;
 end;
 $$ language plpgsql security definer set search_path = public;
