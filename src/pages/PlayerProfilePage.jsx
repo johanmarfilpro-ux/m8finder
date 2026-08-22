@@ -66,26 +66,31 @@ export default function PlayerProfilePage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <div className="overflow-hidden rounded-xl border border-surface-border bg-surface-soft">
-        <ProfileBanner profile={profile} className="h-28 sm:h-36" />
-        <div className="p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1 className={`text-2xl font-bold ${isProfileAdmin ? 'text-orange-400' : 'text-slate-100'}`}>
-            {isProfileAdmin && '[ADMIN] '}
-            {profile.displayName}
-          </h1>
-          {profile.isAvailable && (
-            <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-300">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              Disponible maintenant
-            </span>
-          )}
+        <div className="relative">
+          <ProfileBanner profile={profile} className="absolute inset-0 h-full" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/60 to-black/80" />
+
+          <div className="relative z-10 p-6 pb-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <h1 className={`text-2xl font-bold drop-shadow ${isProfileAdmin ? 'text-orange-400' : 'text-white'}`}>
+                {isProfileAdmin && '[ADMIN] '}
+                {profile.displayName}
+              </h1>
+              {profile.isAvailable && (
+                <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/20 px-3 py-1 text-sm font-medium text-emerald-300 backdrop-blur-sm">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  Disponible maintenant
+                </span>
+              )}
+            </div>
+
+            <p className="mt-4 whitespace-pre-line text-sm text-slate-200 drop-shadow">
+              {profile.bio || "Ce joueur n'a pas encore ecrit de bio."}
+            </p>
+          </div>
         </div>
 
-        <p className="mt-4 whitespace-pre-line text-sm text-slate-300">
-          {profile.bio || "Ce joueur n'a pas encore ecrit de bio."}
-        </p>
-
-        <div className="mt-8 flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 p-6 pt-4">
           <Button variant="primary" onClick={handleSendMessage} disabled={isMessaging}>
             Envoyer un message
           </Button>
@@ -97,7 +102,6 @@ export default function PlayerProfilePage() {
               Signaler ce profil
             </Button>
           )}
-        </div>
         </div>
       </div>
 
