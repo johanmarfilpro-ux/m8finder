@@ -91,13 +91,22 @@ export function AuthProvider({ children }) {
   }, []);
 
   const authUser = session?.user ?? null;
-  const currentUser = authUser
-    ? {
-        id: authUser.id,
-        email: authUser.email,
-        username: authUser.user_metadata?.username || authUser.email.split('@')[0],
-      }
-    : null;
+  // Memoise sur "authUser" (stable tant que la session ne change pas
+  // reellement) : sans ca, cet objet est recree a CHAQUE rendu, ce qui
+  // invalide le useMemo de "value" ci-dessous et provoque un rechargement
+  // complet des donnees (profils, etc.) dans DatabaseContext bien plus
+  // souvent que necessaire.
+  const currentUser = useMemo(
+    () =>
+      authUser
+        ? {
+            id: authUser.id,
+            email: authUser.email,
+            username: authUser.user_metadata?.username || authUser.email.split('@')[0],
+          }
+        : null,
+    [authUser]
+  );
 
   const value = useMemo(
     () => ({
