@@ -95,9 +95,7 @@ export default function Navbar() {
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {isAuthenticated ? (
             <>
-              <div className="hidden sm:block">
-                <AvailabilityToggle />
-              </div>
+              <AvailabilityToggle />
               <NotificationBell />
               <span className="hidden text-sm text-slate-400 sm:inline">{currentUser.username}</span>
               <Button variant="ghost" onClick={handleLogout} className="hidden sm:inline-flex">
@@ -142,9 +140,8 @@ export default function Navbar() {
             )}
           </nav>
 
-          <div className="mt-3 flex items-center justify-between border-t border-surface-border pt-3">
+          <div className="mt-3 border-t border-surface-border pt-3">
             <span className="text-sm text-slate-400">{currentUser.username}</span>
-            <AvailabilityToggle />
           </div>
 
           <Button variant="ghost" onClick={handleLogout} className="mt-3 w-full">
