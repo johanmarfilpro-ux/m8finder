@@ -54,6 +54,18 @@ function mapReportRow(row) {
   };
 }
 
+function mapMatchAlertRow(row) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    gameId: row.game_id,
+    roles: row.roles ?? [],
+    rankTiers: row.rank_tiers ?? [],
+    platforms: row.platforms ?? [],
+    createdAt: row.created_at,
+  };
+}
+
 function mapNotificationRow(row) {
   return {
     id: row.id,
@@ -71,6 +83,7 @@ export function DatabaseProvider({ children }) {
   const [gameProfiles, setGameProfiles] = useState([]);
   const [reports, setReports] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [matchAlerts, setMatchAlerts] = useState([]);
   const [accountStatusByUserId, setAccountStatusByUserId] = useState({});
   const [adminUserIds, setAdminUserIds] = useState([]);
 
@@ -123,6 +136,22 @@ export function DatabaseProvider({ children }) {
     setAdminUserIds(data.map((row) => row.user_id));
   }, []);
 
+  const refreshMatchAlerts = useCallback(async () => {
+    if (!currentUser) {
+      setMatchAlerts([]);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('match_alerts')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Erreur chargement des alertes', error);
+      return;
+    }
+    setMatchAlerts(data.map(mapMatchAlertRow));
+  }, [currentUser]);
+
   const refreshReports = useCallback(async () => {
     if (!isAdmin) {
       setReports([]);
@@ -163,6 +192,7 @@ export function DatabaseProvider({ children }) {
       setGameProfiles([]);
       setAccountStatusByUserId({});
       setAdminUserIds([]);
+      setMatchAlerts([]);
       return;
     }
     refreshGames();
@@ -170,7 +200,16 @@ export function DatabaseProvider({ children }) {
     refreshGameProfiles();
     refreshStatuses();
     refreshAdminUserIds();
-  }, [currentUser, refreshGames, refreshProfiles, refreshGameProfiles, refreshStatuses, refreshAdminUserIds]);
+    refreshMatchAlerts();
+  }, [
+    currentUser,
+    refreshGames,
+    refreshProfiles,
+    refreshGameProfiles,
+    refreshStatuses,
+    refreshAdminUserIds,
+    refreshMatchAlerts,
+  ]);
 
   useEffect(() => {
     refreshReports();
@@ -323,6 +362,30 @@ export function DatabaseProvider({ children }) {
     [refreshStatuses]
   );
 
+  const createMatchAlert = useCallback(
+    async ({ userId, gameId, roles, rankTiers, platforms }) => {
+      const { error } = await supabase.from('match_alerts').insert({
+        user_id: userId,
+        game_id: gameId,
+        roles,
+        rank_tiers: rankTiers,
+        platforms,
+      });
+      if (error) throw new Error(error.message);
+      await refreshMatchAlerts();
+    },
+    [refreshMatchAlerts]
+  );
+
+  const deleteMatchAlert = useCallback(
+    async (matchAlertId) => {
+      const { error } = await supabase.from('match_alerts').delete().eq('id', matchAlertId);
+      if (error) throw new Error(error.message);
+      await refreshMatchAlerts();
+    },
+    [refreshMatchAlerts]
+  );
+
   const listNotificationsForUser = useCallback(() => notifications, [notifications]);
 
   const addNotification = useCallback(
@@ -363,6 +426,7 @@ export function DatabaseProvider({ children }) {
       gameProfiles,
       reports,
       notifications,
+      matchAlerts,
       accountStatusByUserId,
       adminUserIds,
       isUserAdmin,
@@ -382,6 +446,8 @@ export function DatabaseProvider({ children }) {
       addNotification,
       markNotificationRead,
       markAllNotificationsRead,
+      createMatchAlert,
+      deleteMatchAlert,
     }),
     [
       games,
@@ -389,6 +455,7 @@ export function DatabaseProvider({ children }) {
       gameProfiles,
       reports,
       notifications,
+      matchAlerts,
       accountStatusByUserId,
       adminUserIds,
       isUserAdmin,
@@ -408,6 +475,8 @@ export function DatabaseProvider({ children }) {
       addNotification,
       markNotificationRead,
       markAllNotificationsRead,
+      createMatchAlert,
+      deleteMatchAlert,
     ]
   );
 
