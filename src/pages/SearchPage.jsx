@@ -37,6 +37,7 @@ export default function SearchPage() {
           filters.gameRoles.length === 0 || filters.gameRoles.some((role) => gameProfile.roles.includes(role))
       )
       .filter(({ gameProfile }) => filters.rankTiers.length === 0 || filters.rankTiers.includes(gameProfile.rankTier))
+      .filter(({ gameProfile }) => filters.platforms.length === 0 || filters.platforms.includes(gameProfile.platform))
       .filter(({ profile }) => !filters.onlyAvailable || profile.isAvailable);
   }, [gameId, listGameProfilesForGame, currentUser.id, filters]);
 

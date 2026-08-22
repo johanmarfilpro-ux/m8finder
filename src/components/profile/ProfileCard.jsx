@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { getRankLabel, getRoleLabel } from '../../data/constants.js';
+import { getPlatformLabel, getRankLabel, getRoleLabel } from '../../data/constants.js';
 import { useDatabase } from '../../hooks/useDatabase.js';
 import Badge from '../common/Badge.jsx';
 
@@ -31,6 +31,7 @@ export default function ProfileCard({ profile, gameProfile, game }) {
       <p className="line-clamp-2 text-sm text-slate-400">{profile.bio || 'Pas encore de bio.'}</p>
 
       <div className="flex flex-wrap gap-1.5">
+        {gameProfile.platform && <Badge tone="neutral">{getPlatformLabel(game, gameProfile.platform)}</Badge>}
         {gameProfile.roles.map((role) => (
           <Badge key={role} tone="brand">
             {getRoleLabel(game, role)}

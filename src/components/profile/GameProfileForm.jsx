@@ -25,10 +25,14 @@ export default function GameProfileForm({
   const [rankDivision, setRankDivision] = useState(
     initialGameProfile?.rankDivision ?? initialGame?.divisions[0] ?? null
   );
+  const [platform, setPlatform] = useState(
+    initialGameProfile?.platform ?? initialGame?.platforms[0]?.value ?? null
+  );
   const [validationError, setValidationError] = useState('');
 
   const game = useMemo(() => games.find((g) => g.id === gameId) ?? null, [games, gameId]);
   const requiresDivision = game ? rankHasDivision(game, rankTier) : false;
+  const requiresPlatform = (game?.platforms.length ?? 0) > 0;
 
   function handleGameChange(event) {
     const nextGameId = event.target.value;
@@ -37,6 +41,7 @@ export default function GameProfileForm({
     setRoles([]);
     setRankTier(nextGame?.ranks[0]?.value ?? '');
     setRankDivision(nextGame?.divisions[0] ?? null);
+    setPlatform(nextGame?.platforms[0]?.value ?? null);
   }
 
   function handleRankChange(event) {
@@ -55,6 +60,10 @@ export default function GameProfileForm({
       setValidationError('Selectionne au moins un role.');
       return;
     }
+    if (requiresPlatform && !platform) {
+      setValidationError('Choisis une plateforme.');
+      return;
+    }
     setValidationError('');
     onSubmit({
       gameId,
@@ -62,6 +71,7 @@ export default function GameProfileForm({
       roles,
       rankTier,
       rankDivision: requiresDivision ? rankDivision : null,
+      platform: requiresPlatform ? platform : null,
     });
   }
 
@@ -107,6 +117,23 @@ export default function GameProfileForm({
           placeholder="ToiMeme#EU"
         />
       </FormField>
+
+      {requiresPlatform && (
+        <FormField label="Plateforme" htmlFor="platform">
+          <select
+            id="platform"
+            className={inputClassName}
+            value={platform ?? ''}
+            onChange={(event) => setPlatform(event.target.value)}
+          >
+            {(game?.platforms ?? []).map((platformOption) => (
+              <option key={platformOption.value} value={platformOption.value}>
+                {platformOption.label}
+              </option>
+            ))}
+          </select>
+        </FormField>
+      )}
 
       <FormField label="Roles" hint="Selectionne tous les roles que tu joues.">
         <ChipMultiSelect options={game?.roles ?? []} value={roles} onChange={setRoles} />

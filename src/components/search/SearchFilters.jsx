@@ -1,6 +1,6 @@
 import ChipMultiSelect from '../common/ChipMultiSelect.jsx';
 
-export const DEFAULT_FILTERS = { gameRoles: [], rankTiers: [], onlyAvailable: false };
+export const DEFAULT_FILTERS = { gameRoles: [], rankTiers: [], platforms: [], onlyAvailable: false };
 
 export default function SearchFilters({ game, filters, onChange }) {
   function updateFilter(field, fieldValue) {
@@ -12,6 +12,17 @@ export default function SearchFilters({ game, filters, onChange }) {
       <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
         Filtrer par rang, role et disponibilite
       </h2>
+
+      {(game?.platforms.length ?? 0) > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-slate-300">Plateforme</span>
+          <ChipMultiSelect
+            options={game.platforms}
+            value={filters.platforms}
+            onChange={(platforms) => updateFilter('platforms', platforms)}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-slate-300">Role</span>

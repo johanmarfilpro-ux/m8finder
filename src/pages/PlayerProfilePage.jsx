@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useDatabase } from '../hooks/useDatabase.js';
 import { useToast } from '../hooks/useToast.js';
-import { getRankLabel, getRoleLabel } from '../data/constants.js';
+import { getPlatformLabel, getRankLabel, getRoleLabel } from '../data/constants.js';
 import Badge from '../components/common/Badge.jsx';
 import Button from '../components/common/Button.jsx';
 import ContactPlayerModal from '../components/profile/ContactPlayerModal.jsx';
@@ -96,6 +96,9 @@ export default function PlayerProfilePage() {
                     <p className="text-xs text-slate-500">{gameProfile.inGameId}</p>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
+                    {gameProfile.platform && (
+                      <Badge tone="neutral">{getPlatformLabel(game, gameProfile.platform)}</Badge>
+                    )}
                     {gameProfile.roles.map((role) => (
                       <Badge key={role} tone="brand">
                         {getRoleLabel(game, role)}

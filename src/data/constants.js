@@ -37,3 +37,7 @@ export function getRankLabel(game, tier, division) {
   if (!rankEntry.hasDivision) return rankEntry.label;
   return division ? `${rankEntry.label} ${division}` : rankEntry.label;
 }
+
+export function getPlatformLabel(game, platformValue) {
+  return game?.platforms.find((p) => p.value === platformValue)?.label ?? platformValue;
+}

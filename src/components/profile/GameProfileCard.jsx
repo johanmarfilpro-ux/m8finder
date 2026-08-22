@@ -1,4 +1,4 @@
-import { getRankLabel, getRoleLabel } from '../../data/constants.js';
+import { getPlatformLabel, getRankLabel, getRoleLabel } from '../../data/constants.js';
 import Badge from '../common/Badge.jsx';
 import Button from '../common/Button.jsx';
 
@@ -21,6 +21,7 @@ export default function GameProfileCard({ game, gameProfile, onEdit, onDelete })
       </div>
 
       <div className="flex flex-wrap gap-1.5">
+        {gameProfile.platform && <Badge tone="neutral">{getPlatformLabel(game, gameProfile.platform)}</Badge>}
         {gameProfile.roles.map((role) => (
           <Badge key={role} tone="brand">
             {getRoleLabel(game, role)}

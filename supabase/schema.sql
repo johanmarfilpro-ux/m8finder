@@ -75,6 +75,8 @@ $$ language sql security definer stable set search_path = public;
 --    ranks  : [{ "value": "FER", "label": "Fer", "hasDivision": true }, ...]
 --    divisions : ["1", "2", "3"] (liste des divisions possibles pour ce jeu,
 --                utilisee seulement pour les rangs ou hasDivision = true)
+--    platforms : [{ "value": "PC", "label": "PC" }, ...] (liste vide si le
+--                jeu ne distingue pas de plateforme, ex: jeu mobile only)
 -- ---------------------------------------------------------------------
 create table if not exists public.games (
   id text primary key,
@@ -82,11 +84,12 @@ create table if not exists public.games (
   roles jsonb not null default '[]'::jsonb,
   ranks jsonb not null default '[]'::jsonb,
   divisions jsonb not null default '[]'::jsonb,
+  platforms jsonb not null default '[]'::jsonb,
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );
 
-insert into public.games (id, label, roles, ranks, divisions, sort_order)
+insert into public.games (id, label, roles, ranks, divisions, platforms, sort_order)
 values (
   'VALORANT',
   'Valorant',
@@ -108,6 +111,10 @@ values (
     {"value": "RADIANT", "label": "Radiant", "hasDivision": false}
   ]'::jsonb,
   '["1", "2", "3"]'::jsonb,
+  '[
+    {"value": "PC", "label": "PC"},
+    {"value": "CONSOLE", "label": "Console"}
+  ]'::jsonb,
   0
 )
 on conflict (id) do nothing;
@@ -139,6 +146,9 @@ create table if not exists public.game_profiles (
   roles text[] not null default '{}',
   rank_tier text not null,
   rank_division text,
+  -- Plateforme (PC/Console...) : nulle si le jeu ne definit pas de
+  -- plateformes (voir games.platforms).
+  platform text,
   updated_at timestamptz not null default now(),
   unique (user_id, game_id)
 );

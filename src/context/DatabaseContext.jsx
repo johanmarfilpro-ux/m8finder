@@ -12,6 +12,7 @@ function mapGameRow(row) {
     roles: row.roles ?? [],
     ranks: row.ranks ?? [],
     divisions: row.divisions ?? [],
+    platforms: row.platforms ?? [],
     sortOrder: row.sort_order,
   };
 }
@@ -36,6 +37,7 @@ function mapGameProfileRow(row) {
     roles: row.roles ?? [],
     rankTier: row.rank_tier,
     rankDivision: row.rank_division,
+    platform: row.platform,
     updatedAt: row.updated_at,
   };
 }
@@ -236,6 +238,7 @@ export function DatabaseProvider({ children }) {
         roles: gameProfileData.roles,
         rank_tier: gameProfileData.rankTier,
         rank_division: gameProfileData.rankDivision,
+        platform: gameProfileData.platform,
         updated_at: new Date().toISOString(),
       };
       const { error } = await supabase.from('game_profiles').upsert(row, { onConflict: 'user_id,game_id' });
