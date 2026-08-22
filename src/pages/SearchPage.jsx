@@ -8,12 +8,21 @@ import Button from '../components/common/Button.jsx';
 import { inputClassName } from '../components/common/FormField.jsx';
 import { getRoleLabel } from '../data/constants.js';
 
+const MOBILE_PAGE_SIZE = 10;
+const DESKTOP_PAGE_SIZE = 15;
+
+function getPageSize() {
+  if (typeof window === 'undefined') return DESKTOP_PAGE_SIZE;
+  return window.matchMedia('(min-width: 640px)').matches ? DESKTOP_PAGE_SIZE : MOBILE_PAGE_SIZE;
+}
+
 export default function SearchPage() {
   const { currentUser } = useAuth();
   const { games, listGameProfilesForGame, addNotification } = useDatabase();
   const { showToast } = useToast();
   const [gameId, setGameId] = useState('');
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [visibleCount, setVisibleCount] = useState(getPageSize);
 
   useEffect(() => {
     if (!gameId && games.length > 0) {
@@ -40,6 +49,17 @@ export default function SearchPage() {
       .filter(({ gameProfile }) => filters.platforms.length === 0 || filters.platforms.includes(gameProfile.platform))
       .filter(({ profile }) => !filters.onlyAvailable || profile.isAvailable);
   }, [gameId, listGameProfilesForGame, currentUser.id, filters]);
+
+  useEffect(() => {
+    setVisibleCount(getPageSize());
+  }, [gameId, filters]);
+
+  const visibleEntries = matchingEntries.slice(0, visibleCount);
+  const hasMore = matchingEntries.length > visibleCount;
+
+  function handleShowMore() {
+    setVisibleCount((prev) => prev + getPageSize());
+  }
 
   async function handleCreateAlert() {
     const roleLabel =
@@ -88,7 +108,15 @@ export default function SearchPage() {
         </div>
       )}
 
-      <PlayerList entries={matchingEntries} game={game} />
+      <PlayerList entries={visibleEntries} game={game} />
+
+      {hasMore && (
+        <div className="mt-6 flex justify-center">
+          <Button variant="secondary" onClick={handleShowMore}>
+            Voir plus
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
