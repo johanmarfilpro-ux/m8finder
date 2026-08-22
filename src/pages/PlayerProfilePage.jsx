@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useDatabase } from '../hooks/useDatabase.js';
 import { useToast } from '../hooks/useToast.js';
-import { getGameRoleLabel, getRankLabel } from '../data/constants.js';
+import { getRankLabel, getRoleLabel } from '../data/constants.js';
 import Badge from '../components/common/Badge.jsx';
 import Button from '../components/common/Button.jsx';
 import ContactPlayerModal from '../components/profile/ContactPlayerModal.jsx';
@@ -12,13 +12,14 @@ import ReportProfileModal from '../components/profile/ReportProfileModal.jsx';
 export default function PlayerProfilePage() {
   const { userId } = useParams();
   const { currentUser } = useAuth();
-  const { getProfileByUserId, createReport, isUserAdmin } = useDatabase();
+  const { getProfileByUserId, getGameProfilesByUserId, getGameById, createReport, isUserAdmin } = useDatabase();
   const { showToast } = useToast();
 
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   const profile = getProfileByUserId(userId);
+  const gameProfiles = getGameProfilesByUserId(userId);
   const isProfileAdmin = isUserAdmin(userId);
 
   if (!profile) {
@@ -50,13 +51,10 @@ export default function PlayerProfilePage() {
     <div className="mx-auto max-w-2xl px-4 py-10">
       <div className="rounded-xl border border-surface-border bg-surface-soft p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className={`text-2xl font-bold ${isProfileAdmin ? 'text-orange-400' : 'text-slate-100'}`}>
-              {isProfileAdmin && '[ADMIN] '}
-              {profile.displayName}
-            </h1>
-            <p className="text-sm text-slate-500">{profile.riotId}</p>
-          </div>
+          <h1 className={`text-2xl font-bold ${isProfileAdmin ? 'text-orange-400' : 'text-slate-100'}`}>
+            {isProfileAdmin && '[ADMIN] '}
+            {profile.displayName}
+          </h1>
           {profile.isAvailable && (
             <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-300">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
@@ -65,16 +63,7 @@ export default function PlayerProfilePage() {
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {profile.gameRoles.map((role) => (
-            <Badge key={role} tone="brand">
-              {getGameRoleLabel(role)}
-            </Badge>
-          ))}
-          <Badge tone="success">{getRankLabel(profile.rankTier, profile.rankDivision)}</Badge>
-        </div>
-
-        <p className="mt-6 whitespace-pre-line text-sm text-slate-300">
+        <p className="mt-4 whitespace-pre-line text-sm text-slate-300">
           {profile.bio || "Ce joueur n'a pas encore ecrit de bio."}
         </p>
 
@@ -88,6 +77,37 @@ export default function PlayerProfilePage() {
             </Button>
           )}
         </div>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="mb-4 text-lg font-semibold text-slate-100">Jeux</h2>
+        {gameProfiles.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-surface-border p-4 text-sm text-slate-500">
+            Ce joueur n'a pas encore ajoute de jeu.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {gameProfiles.map((gameProfile) => {
+              const game = getGameById(gameProfile.gameId);
+              return (
+                <div key={gameProfile.id} className="rounded-xl border border-surface-border bg-surface-soft p-4">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h3 className="font-semibold text-slate-100">{game?.label ?? gameProfile.gameId}</h3>
+                    <p className="text-xs text-slate-500">{gameProfile.inGameId}</p>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {gameProfile.roles.map((role) => (
+                      <Badge key={role} tone="brand">
+                        {getRoleLabel(game, role)}
+                      </Badge>
+                    ))}
+                    <Badge tone="success">{getRankLabel(game, gameProfile.rankTier, gameProfile.rankDivision)}</Badge>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <ContactPlayerModal

@@ -1,28 +1,3 @@
-// Roles d'agent Valorant.
-export const GAME_ROLES = [
-  { value: 'DUELIST', label: 'Duelliste' },
-  { value: 'INITIATOR', label: 'Initiateur' },
-  { value: 'CONTROLLER', label: 'Controleur' },
-  { value: 'SENTINEL', label: 'Sentinelle' },
-];
-
-export const RANK_TIERS = [
-  { value: 'FER', label: 'Fer' },
-  { value: 'BRONZE', label: 'Bronze' },
-  { value: 'ARGENT', label: 'Argent' },
-  { value: 'OR', label: 'Or' },
-  { value: 'PLATINE', label: 'Platine' },
-  { value: 'DIAMANT', label: 'Diamant' },
-  { value: 'ASCENDANT', label: 'Ascendant' },
-  { value: 'IMMORTEL', label: 'Immortel' },
-  { value: 'RADIANT', label: 'Radiant' },
-];
-
-// Radiant n'a pas de division.
-export const RANKS_WITHOUT_DIVISION = ['RADIANT'];
-
-export const RANK_DIVISIONS = ['1', '2', '3'];
-
 export const ACCOUNT_STATUS = {
   ACTIVE: 'ACTIF',
   SUSPENDED: 'SUSPENDU',
@@ -44,13 +19,21 @@ export const REPORT_REASONS = [
   'Autre',
 ];
 
-export function getRankLabel(tier, division) {
-  const tierEntry = RANK_TIERS.find((t) => t.value === tier);
-  if (!tierEntry) return 'Non classe';
-  if (RANKS_WITHOUT_DIVISION.includes(tier)) return tierEntry.label;
-  return division ? `${tierEntry.label} ${division}` : tierEntry.label;
+// Les roles/rangs disponibles dependent du jeu (voir la table "games" en
+// base) : ces helpers prennent donc l'objet "game" concerne, au lieu de
+// s'appuyer sur des enumerations codees en dur pour un seul jeu.
+
+export function getRoleLabel(game, roleValue) {
+  return game?.roles.find((r) => r.value === roleValue)?.label ?? roleValue;
 }
 
-export function getGameRoleLabel(role) {
-  return GAME_ROLES.find((r) => r.value === role)?.label ?? role;
+export function rankHasDivision(game, tier) {
+  return game?.ranks.find((r) => r.value === tier)?.hasDivision ?? false;
+}
+
+export function getRankLabel(game, tier, division) {
+  const rankEntry = game?.ranks.find((r) => r.value === tier);
+  if (!rankEntry) return 'Non classe';
+  if (!rankEntry.hasDivision) return rankEntry.label;
+  return division ? `${rankEntry.label} ${division}` : rankEntry.label;
 }

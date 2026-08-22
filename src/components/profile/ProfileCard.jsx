@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { getGameRoleLabel, getRankLabel } from '../../data/constants.js';
+import { getRankLabel, getRoleLabel } from '../../data/constants.js';
 import { useDatabase } from '../../hooks/useDatabase.js';
 import Badge from '../common/Badge.jsx';
 
-export default function ProfileCard({ profile }) {
+export default function ProfileCard({ profile, gameProfile, game }) {
   const { isUserAdmin } = useDatabase();
   const isAdmin = isUserAdmin(profile.userId);
 
@@ -18,7 +18,7 @@ export default function ProfileCard({ profile }) {
             {isAdmin && '[ADMIN] '}
             {profile.displayName}
           </h3>
-          <p className="text-xs text-slate-500">{profile.riotId}</p>
+          <p className="text-xs text-slate-500">{gameProfile.inGameId}</p>
         </div>
         {profile.isAvailable && (
           <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
@@ -31,12 +31,12 @@ export default function ProfileCard({ profile }) {
       <p className="line-clamp-2 text-sm text-slate-400">{profile.bio || 'Pas encore de bio.'}</p>
 
       <div className="flex flex-wrap gap-1.5">
-        {profile.gameRoles.map((role) => (
+        {gameProfile.roles.map((role) => (
           <Badge key={role} tone="brand">
-            {getGameRoleLabel(role)}
+            {getRoleLabel(game, role)}
           </Badge>
         ))}
-        <Badge tone="success">{getRankLabel(profile.rankTier, profile.rankDivision)}</Badge>
+        <Badge tone="success">{getRankLabel(game, gameProfile.rankTier, gameProfile.rankDivision)}</Badge>
       </div>
     </Link>
   );

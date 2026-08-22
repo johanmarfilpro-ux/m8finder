@@ -5,17 +5,37 @@ import { ACCOUNT_STATUS } from '../data/constants.js';
 
 const DatabaseContext = createContext(null);
 
+function mapGameRow(row) {
+  return {
+    id: row.id,
+    label: row.label,
+    roles: row.roles ?? [],
+    ranks: row.ranks ?? [],
+    divisions: row.divisions ?? [],
+    sortOrder: row.sort_order,
+  };
+}
+
 function mapProfileRow(row) {
   return {
     userId: row.user_id,
     displayName: row.display_name,
-    riotId: row.riot_id,
-    gameRoles: row.game_roles ?? [],
-    rankTier: row.rank_tier,
-    rankDivision: row.rank_division,
-    isAvailable: row.is_available ?? false,
     bio: row.bio ?? '',
     discordTag: row.discord_tag ?? '',
+    isAvailable: row.is_available ?? false,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapGameProfileRow(row) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    gameId: row.game_id,
+    inGameId: row.in_game_id,
+    roles: row.roles ?? [],
+    rankTier: row.rank_tier,
+    rankDivision: row.rank_division,
     updatedAt: row.updated_at,
   };
 }
@@ -44,11 +64,22 @@ function mapNotificationRow(row) {
 
 export function DatabaseProvider({ children }) {
   const { currentUser, isAdmin } = useAuth();
+  const [games, setGames] = useState([]);
   const [profiles, setProfiles] = useState([]);
+  const [gameProfiles, setGameProfiles] = useState([]);
   const [reports, setReports] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [accountStatusByUserId, setAccountStatusByUserId] = useState({});
   const [adminUserIds, setAdminUserIds] = useState([]);
+
+  const refreshGames = useCallback(async () => {
+    const { data, error } = await supabase.from('games').select('*').order('sort_order');
+    if (error) {
+      console.error('Erreur chargement des jeux', error);
+      return;
+    }
+    setGames(data.map(mapGameRow));
+  }, []);
 
   const refreshProfiles = useCallback(async () => {
     const { data, error } = await supabase.from('profiles').select('*');
@@ -57,6 +88,15 @@ export function DatabaseProvider({ children }) {
       return;
     }
     setProfiles(data.map(mapProfileRow));
+  }, []);
+
+  const refreshGameProfiles = useCallback(async () => {
+    const { data, error } = await supabase.from('game_profiles').select('*');
+    if (error) {
+      console.error('Erreur chargement profils de jeu', error);
+      return;
+    }
+    setGameProfiles(data.map(mapGameProfileRow));
   }, []);
 
   const refreshStatuses = useCallback(async () => {
@@ -116,15 +156,19 @@ export function DatabaseProvider({ children }) {
 
   useEffect(() => {
     if (!currentUser) {
+      setGames([]);
       setProfiles([]);
+      setGameProfiles([]);
       setAccountStatusByUserId({});
       setAdminUserIds([]);
       return;
     }
+    refreshGames();
     refreshProfiles();
+    refreshGameProfiles();
     refreshStatuses();
     refreshAdminUserIds();
-  }, [currentUser, refreshProfiles, refreshStatuses, refreshAdminUserIds]);
+  }, [currentUser, refreshGames, refreshProfiles, refreshGameProfiles, refreshStatuses, refreshAdminUserIds]);
 
   useEffect(() => {
     refreshReports();
@@ -134,9 +178,22 @@ export function DatabaseProvider({ children }) {
     refreshNotifications();
   }, [refreshNotifications]);
 
+  const getGameById = useCallback((gameId) => games.find((game) => game.id === gameId) ?? null, [games]);
+
   const getProfileByUserId = useCallback(
     (userId) => profiles.find((profile) => profile.userId === userId) ?? null,
     [profiles]
+  );
+
+  const getGameProfilesByUserId = useCallback(
+    (userId) => gameProfiles.filter((gameProfile) => gameProfile.userId === userId),
+    [gameProfiles]
+  );
+
+  const getGameProfile = useCallback(
+    (userId, gameId) =>
+      gameProfiles.find((gameProfile) => gameProfile.userId === userId && gameProfile.gameId === gameId) ?? null,
+    [gameProfiles]
   );
 
   const isUserAdmin = useCallback((userId) => adminUserIds.includes(userId), [adminUserIds]);
@@ -146,13 +203,9 @@ export function DatabaseProvider({ children }) {
       const row = {
         user_id: profileData.userId,
         display_name: profileData.displayName,
-        riot_id: profileData.riotId,
-        game_roles: profileData.gameRoles,
-        rank_tier: profileData.rankTier,
-        rank_division: profileData.rankDivision,
-        is_available: profileData.isAvailable,
         bio: profileData.bio,
         discord_tag: profileData.discordTag,
+        is_available: profileData.isAvailable,
         updated_at: new Date().toISOString(),
       };
       const { error } = await supabase.from('profiles').upsert(row);
@@ -174,11 +227,49 @@ export function DatabaseProvider({ children }) {
     [refreshProfiles]
   );
 
-  const listPlayerProfiles = useCallback(() => {
-    return profiles
-      .filter((profile) => (accountStatusByUserId[profile.userId] ?? ACCOUNT_STATUS.ACTIVE) === ACCOUNT_STATUS.ACTIVE)
-      .map((profile) => ({ profile }));
-  }, [profiles, accountStatusByUserId]);
+  const upsertGameProfile = useCallback(
+    async (gameProfileData) => {
+      const row = {
+        user_id: gameProfileData.userId,
+        game_id: gameProfileData.gameId,
+        in_game_id: gameProfileData.inGameId,
+        roles: gameProfileData.roles,
+        rank_tier: gameProfileData.rankTier,
+        rank_division: gameProfileData.rankDivision,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await supabase.from('game_profiles').upsert(row, { onConflict: 'user_id,game_id' });
+      if (error) throw new Error(error.message);
+      await refreshGameProfiles();
+    },
+    [refreshGameProfiles]
+  );
+
+  const deleteGameProfile = useCallback(
+    async (gameProfileId) => {
+      const { error } = await supabase.from('game_profiles').delete().eq('id', gameProfileId);
+      if (error) throw new Error(error.message);
+      await refreshGameProfiles();
+    },
+    [refreshGameProfiles]
+  );
+
+  const listGameProfilesForGame = useCallback(
+    (gameId) => {
+      return gameProfiles
+        .filter((gameProfile) => gameProfile.gameId === gameId)
+        .filter(
+          (gameProfile) =>
+            (accountStatusByUserId[gameProfile.userId] ?? ACCOUNT_STATUS.ACTIVE) === ACCOUNT_STATUS.ACTIVE
+        )
+        .map((gameProfile) => ({
+          gameProfile,
+          profile: getProfileByUserId(gameProfile.userId),
+        }))
+        .filter(({ profile }) => Boolean(profile));
+    },
+    [gameProfiles, accountStatusByUserId, getProfileByUserId]
+  );
 
   const createReport = useCallback(
     async ({ reporterId, reportedUserId, reason, details }) => {
@@ -253,16 +344,23 @@ export function DatabaseProvider({ children }) {
 
   const value = useMemo(
     () => ({
+      games,
       profiles,
+      gameProfiles,
       reports,
       notifications,
       accountStatusByUserId,
       adminUserIds,
       isUserAdmin,
+      getGameById,
       getProfileByUserId,
+      getGameProfilesByUserId,
+      getGameProfile,
       upsertProfile,
       setAvailability,
-      listPlayerProfiles,
+      upsertGameProfile,
+      deleteGameProfile,
+      listGameProfilesForGame,
       createReport,
       updateReportStatus,
       setUserStatus,
@@ -272,16 +370,23 @@ export function DatabaseProvider({ children }) {
       markAllNotificationsRead,
     }),
     [
+      games,
       profiles,
+      gameProfiles,
       reports,
       notifications,
       accountStatusByUserId,
       adminUserIds,
       isUserAdmin,
+      getGameById,
       getProfileByUserId,
+      getGameProfilesByUserId,
+      getGameProfile,
       upsertProfile,
       setAvailability,
-      listPlayerProfiles,
+      upsertGameProfile,
+      deleteGameProfile,
+      listGameProfilesForGame,
       createReport,
       updateReportStatus,
       setUserStatus,

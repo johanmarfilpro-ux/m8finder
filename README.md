@@ -1,10 +1,16 @@
 # M8Finder
 
-Application React (Vite + Tailwind CSS) permettant a des joueurs Valorant
-de creer un profil (role d'agent, rang, disponibilites), de rechercher des coequipiers,
-de les contacter, de signaler un profil, et a un administrateur de moderer
-la communaute. Le projet suit le diagramme de cas d'utilisation dans
-[`UML/uml.drawio`](UML/uml.drawio).
+Application React (Vite + Tailwind CSS) multi-jeux permettant a des joueurs
+de creer un profil par jeu (role(s), rang, identifiant in-game), de
+rechercher des coequipiers pour un jeu donne, de les contacter, de signaler
+un profil, et a un administrateur de moderer la communaute. Le projet suit
+le diagramme de cas d'utilisation dans [`UML/uml.drawio`](UML/uml.drawio)
+(redige a l'origine pour Valorant, seul jeu actuellement seede).
+
+Les jeux geres par l'application (roles et rangs disponibles pour chacun)
+sont des **donnees** stockees dans la table `games`, pas du code en dur :
+ajouter un jeu se fait en ajoutant une ligne dans cette table (voir
+[Ajouter un jeu](#ajouter-un-jeu)), sans toucher au frontend.
 
 Le backend est **Supabase** (Postgres + Authentification + API auto-generee) :
 les comptes, profils, signalements et notifications sont stockes en base et
@@ -88,44 +94,73 @@ npm run lint        # verifie le code avec ESLint
 
 - **S'authentifier** : connexion / inscription par email (`/connexion`,
   `/inscription`), via Supabase Auth.
-- **Creer / modifier profil** : role d'agent, rang, disponibilites, Riot ID en
-  saisie libre (`/profil`). L'application n'appelle pas l'API Riot Games : le
-  Riot ID n'est qu'une information affichee sur le profil, non verifiee.
-- **Rechercher des coequipiers** avec filtres role / rang / disponibilite, et
-  creation d'une alerte de match (`/recherche`).
+- **Creer / modifier profil** (`/profil`) : infos communes (nom affiche, bio,
+  Discord) une fois pour toutes, puis un **profil par jeu** (role(s), rang,
+  identifiant in-game en saisie libre, non verifie) — un joueur peut jouer a
+  plusieurs jeux et apparaitre dans plusieurs recherches.
+- **Rechercher des coequipiers** pour un jeu choisi, avec filtres role / rang
+  (options propres a ce jeu) / disponibilite, et creation d'une alerte de
+  match (`/recherche`).
 - **Recevoir une notification de match** : cloche de notifications dans la
   barre de navigation.
-- **Consulter un profil joueur**, le **contacter** (tag Discord) et le
-  **signaler** (`/joueurs/:id`).
+- **Consulter un profil joueur** (tous ses jeux), le **contacter** (tag
+  Discord) et le **signaler** (`/joueurs/:id`).
 - **Moderer les profils signales** et **bannir / suspendre** un compte
   (`/admin`, reserve aux 2 comptes admin).
+
+### Ajouter un jeu
+
+Aucun changement de code n'est necessaire. Dans le **SQL Editor** Supabase :
+
+```sql
+insert into public.games (id, label, roles, ranks, divisions, sort_order)
+values (
+  'LEAGUE_OF_LEGENDS',
+  'League of Legends',
+  '[{"value": "TOP", "label": "Top"}, {"value": "JUNGLE", "label": "Jungle"}]'::jsonb,
+  '[{"value": "FER", "label": "Fer", "hasDivision": true}, {"value": "CHALLENGER", "label": "Challenger", "hasDivision": false}]'::jsonb,
+  '["IV", "III", "II", "I"]'::jsonb,
+  1
+);
+```
+
+- `roles` : liste `{value, label}` des roles disponibles pour ce jeu.
+- `ranks` : liste `{value, label, hasDivision}` — `hasDivision: false` pour un
+  rang qui n'a pas de division (ex: Radiant, Challenger).
+- `divisions` : liste des divisions possibles (ex: `["1","2","3"]` ou
+  `["IV","III","II","I"]"`), utilisee seulement pour les rangs avec
+  `hasDivision: true`.
+
+Le nouveau jeu apparait automatiquement dans le selecteur du profil et de la
+recherche des la prochaine connexion des joueurs.
 
 ## Structure du projet
 
 ```
 supabase/
-  schema.sql                Tables, Row Level Security, fonctions (a executer dans Supabase)
+  schema.sql                 Tables, Row Level Security, fonctions (projet neuf)
+  migration_*.sql            Migrations a executer sur un projet deja deploye
 src/
-  main.jsx                  Point d'entree, montage des providers et du router
-  App.jsx                   Layout global + declaration des routes
-  index.css                 Styles globaux (Tailwind)
+  main.jsx                   Point d'entree, montage des providers et du router
+  App.jsx                    Layout global + declaration des routes
+  index.css                  Styles globaux (Tailwind)
   lib/
-    supabaseClient.js        Client Supabase (URL + cle depuis les variables d'env)
-  context/                  Contextes React (etat global)
-    AuthContext.jsx           Session Supabase Auth (connexion/inscription/deconnexion, statut admin)
-    DatabaseContext.jsx       Lecture/ecriture des profils, signalements, notifications via Supabase
-    ToastContext.jsx          Messages de confirmation/erreur
-  hooks/                    Hooks personnalises (useAuth, useDatabase, useToast)
+    supabaseClient.js          Client Supabase (URL + cle depuis les variables d'env)
+  context/                   Contextes React (etat global)
+    AuthContext.jsx             Session Supabase Auth (connexion/inscription/deconnexion, statut admin)
+    DatabaseContext.jsx         Lecture/ecriture des jeux, profils, signalements, notifications via Supabase
+    ToastContext.jsx            Messages de confirmation/erreur
+  hooks/                     Hooks personnalises (useAuth, useDatabase, useToast)
   data/
-    constants.js              Enumerations du domaine (roles, rangs, disponibilites, statuts)
+    constants.js                Statuts/raisons de signalement + helpers de libelle role/rang (parametres par jeu)
   components/
-    common/                    Composants UI generiques (Button, Badge, Modal, FormField)
-    layout/                    Navbar, route protegee, cloche de notifications
-    profile/                   Formulaire de profil, carte joueur, contact, signalement
-    search/                    Filtres de recherche, liste de joueurs
-    admin/                     Tableaux de moderation (signalements, comptes)
-  pages/                    Une page par route (Home, Login, Register, Profile,
-                             Search, PlayerProfile, Admin, NotFound)
+    common/                      Composants UI generiques (Button, Badge, Modal, FormField, ChipMultiSelect)
+    layout/                      Navbar, route protegee, cloche de notifications, toggle disponibilite
+    profile/                     Formulaire de compte, formulaire/carte de profil de jeu, contact, signalement
+    search/                      Filtres de recherche, liste de joueurs
+    admin/                       Tableaux de moderation (signalements, comptes)
+  pages/                     Une page par route (Home, Login, Register, Profile,
+                              Search, PlayerProfile, Admin, NotFound)
 ```
 
 ### Conventions de nommage

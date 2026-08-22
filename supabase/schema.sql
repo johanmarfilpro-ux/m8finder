@@ -65,29 +65,86 @@ returns boolean as $$
 $$ language sql security definer stable set search_path = public;
 
 -- ---------------------------------------------------------------------
--- 3. Profils joueur (roles d'agent, rang, disponibilite en direct...)
+-- 3. Jeux geres par l'application.
+--    Chaque jeu definit sa propre liste de roles et de rangs sous forme
+--    de donnees (jsonb), pas de code en dur : ajouter un jeu = ajouter
+--    une ligne ici, sans toucher au frontend. Ne se modifie qu'a la main
+--    depuis le SQL Editor / dashboard (comme "admins").
+--
+--    roles  : [{ "value": "DUELIST", "label": "Duelliste" }, ...]
+--    ranks  : [{ "value": "FER", "label": "Fer", "hasDivision": true }, ...]
+--    divisions : ["1", "2", "3"] (liste des divisions possibles pour ce jeu,
+--                utilisee seulement pour les rangs ou hasDivision = true)
+-- ---------------------------------------------------------------------
+create table if not exists public.games (
+  id text primary key,
+  label text not null,
+  roles jsonb not null default '[]'::jsonb,
+  ranks jsonb not null default '[]'::jsonb,
+  divisions jsonb not null default '[]'::jsonb,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+insert into public.games (id, label, roles, ranks, divisions, sort_order)
+values (
+  'VALORANT',
+  'Valorant',
+  '[
+    {"value": "DUELIST", "label": "Duelliste"},
+    {"value": "INITIATOR", "label": "Initiateur"},
+    {"value": "CONTROLLER", "label": "Controleur"},
+    {"value": "SENTINEL", "label": "Sentinelle"}
+  ]'::jsonb,
+  '[
+    {"value": "FER", "label": "Fer", "hasDivision": true},
+    {"value": "BRONZE", "label": "Bronze", "hasDivision": true},
+    {"value": "ARGENT", "label": "Argent", "hasDivision": true},
+    {"value": "OR", "label": "Or", "hasDivision": true},
+    {"value": "PLATINE", "label": "Platine", "hasDivision": true},
+    {"value": "DIAMANT", "label": "Diamant", "hasDivision": true},
+    {"value": "ASCENDANT", "label": "Ascendant", "hasDivision": true},
+    {"value": "IMMORTEL", "label": "Immortel", "hasDivision": true},
+    {"value": "RADIANT", "label": "Radiant", "hasDivision": false}
+  ]'::jsonb,
+  '["1", "2", "3"]'::jsonb,
+  0
+)
+on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------------
+-- 4. Profils de compte (infos communes a tous les jeux).
 -- ---------------------------------------------------------------------
 create table if not exists public.profiles (
   user_id uuid primary key references auth.users (id) on delete cascade,
   display_name text not null,
-  riot_id text not null,
-  game_roles text[] not null default '{}' check (
-    game_roles <@ array['DUELIST', 'INITIATOR', 'CONTROLLER', 'SENTINEL']
-  ),
-  rank_tier text not null check (
-    rank_tier in ('FER', 'BRONZE', 'ARGENT', 'OR', 'PLATINE', 'DIAMANT', 'ASCENDANT', 'IMMORTEL', 'RADIANT')
-  ),
-  rank_division text check (rank_division in ('1', '2', '3') or rank_division is null),
-  -- Statut "disponible maintenant" bascule depuis la barre de navigation,
-  -- plutot qu'une liste de creneaux horaires declares a l'avance.
-  is_available boolean not null default false,
   bio text not null default '',
   discord_tag text not null default '',
+  -- Statut "disponible maintenant" bascule depuis la barre de navigation,
+  -- plutot qu'une liste de creneaux horaires declares a l'avance. Commun
+  -- a tous les jeux du joueur.
+  is_available boolean not null default false,
   updated_at timestamptz not null default now()
 );
 
 -- ---------------------------------------------------------------------
--- 4. Signalements de profil
+-- 5. Profils de jeu : un joueur peut avoir un profil par jeu (role(s),
+--    rang, identifiant in-game), au plus un par (user_id, game_id).
+-- ---------------------------------------------------------------------
+create table if not exists public.game_profiles (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  game_id text not null references public.games (id) on delete cascade,
+  in_game_id text not null,
+  roles text[] not null default '{}',
+  rank_tier text not null,
+  rank_division text,
+  updated_at timestamptz not null default now(),
+  unique (user_id, game_id)
+);
+
+-- ---------------------------------------------------------------------
+-- 6. Signalements de profil
 -- ---------------------------------------------------------------------
 create table if not exists public.reports (
   id uuid primary key default gen_random_uuid(),
@@ -100,7 +157,7 @@ create table if not exists public.reports (
 );
 
 -- ---------------------------------------------------------------------
--- 5. Notifications (alertes de match)
+-- 7. Notifications (alertes de match)
 -- ---------------------------------------------------------------------
 create table if not exists public.notifications (
   id uuid primary key default gen_random_uuid(),
@@ -116,7 +173,9 @@ create table if not exists public.notifications (
 alter table public.account_status enable row level security;
 alter table public.app_users enable row level security;
 alter table public.admins enable row level security;
+alter table public.games enable row level security;
 alter table public.profiles enable row level security;
+alter table public.game_profiles enable row level security;
 alter table public.reports enable row level security;
 alter table public.notifications enable row level security;
 
@@ -141,6 +200,13 @@ drop policy if exists "admins_select_authenticated" on public.admins;
 create policy "admins_select_authenticated" on public.admins
   for select using (auth.role() = 'authenticated');
 
+-- games : lisible par tout utilisateur connecte (peuple les selecteurs de
+-- jeu, roles et rangs dans le profil et la recherche). Aucune ecriture
+-- n'est autorisee depuis l'app.
+drop policy if exists "games_select_authenticated" on public.games;
+create policy "games_select_authenticated" on public.games
+  for select using (auth.role() = 'authenticated');
+
 -- app_users : reserve aux admins (moderation) et a l'utilisateur pour
 -- son propre enregistrement. N'est jamais lu par les pages joueur
 -- classiques (recherche/profil), qui n'utilisent que "profiles".
@@ -161,6 +227,24 @@ create policy "profiles_insert_own" on public.profiles
 drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_update_own" on public.profiles
   for update using (auth.uid() = user_id);
+
+-- game_profiles : lecture ouverte aux utilisateurs connectes (recherche
+-- de coequipiers par jeu) ; ecriture limitee a ses propres profils de jeu.
+drop policy if exists "game_profiles_select_authenticated" on public.game_profiles;
+create policy "game_profiles_select_authenticated" on public.game_profiles
+  for select using (auth.role() = 'authenticated');
+
+drop policy if exists "game_profiles_insert_own" on public.game_profiles;
+create policy "game_profiles_insert_own" on public.game_profiles
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "game_profiles_update_own" on public.game_profiles;
+create policy "game_profiles_update_own" on public.game_profiles
+  for update using (auth.uid() = user_id);
+
+drop policy if exists "game_profiles_delete_own" on public.game_profiles;
+create policy "game_profiles_delete_own" on public.game_profiles
+  for delete using (auth.uid() = user_id);
 
 -- reports : un joueur peut creer un signalement en son nom, sauf contre un
 -- compte admin (verrou cote base, en plus du controle cote interface) ;

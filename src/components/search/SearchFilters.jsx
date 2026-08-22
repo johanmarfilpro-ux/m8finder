@@ -1,9 +1,8 @@
-import { GAME_ROLES, RANK_TIERS } from '../../data/constants.js';
 import ChipMultiSelect from '../common/ChipMultiSelect.jsx';
 
 export const DEFAULT_FILTERS = { gameRoles: [], rankTiers: [], onlyAvailable: false };
 
-export default function SearchFilters({ filters, onChange }) {
+export default function SearchFilters({ game, filters, onChange }) {
   function updateFilter(field, fieldValue) {
     onChange({ ...filters, [field]: fieldValue });
   }
@@ -17,7 +16,7 @@ export default function SearchFilters({ filters, onChange }) {
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-slate-300">Role</span>
         <ChipMultiSelect
-          options={GAME_ROLES}
+          options={game?.roles ?? []}
           value={filters.gameRoles}
           onChange={(gameRoles) => updateFilter('gameRoles', gameRoles)}
         />
@@ -26,7 +25,7 @@ export default function SearchFilters({ filters, onChange }) {
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-slate-300">Rang</span>
         <ChipMultiSelect
-          options={RANK_TIERS}
+          options={game?.ranks ?? []}
           value={filters.rankTiers}
           onChange={(rankTiers) => updateFilter('rankTiers', rankTiers)}
         />
