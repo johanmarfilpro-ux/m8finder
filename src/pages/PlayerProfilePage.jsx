@@ -8,6 +8,7 @@ import Badge from '../components/common/Badge.jsx';
 import Button from '../components/common/Button.jsx';
 import ContactPlayerModal from '../components/profile/ContactPlayerModal.jsx';
 import ReportProfileModal from '../components/profile/ReportProfileModal.jsx';
+import ProfileBanner from '../components/profile/ProfileBanner.jsx';
 
 export default function PlayerProfilePage() {
   const { userId } = useParams();
@@ -64,7 +65,9 @@ export default function PlayerProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <div className="rounded-xl border border-surface-border bg-surface-soft p-6">
+      <div className="overflow-hidden rounded-xl border border-surface-border bg-surface-soft">
+        <ProfileBanner profile={profile} className="h-28 sm:h-36" />
+        <div className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h1 className={`text-2xl font-bold ${isProfileAdmin ? 'text-orange-400' : 'text-slate-100'}`}>
             {isProfileAdmin && '[ADMIN] '}
@@ -94,6 +97,7 @@ export default function PlayerProfilePage() {
               Signaler ce profil
             </Button>
           )}
+        </div>
         </div>
       </div>
 

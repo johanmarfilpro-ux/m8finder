@@ -24,6 +24,9 @@ function mapProfileRow(row) {
     bio: row.bio ?? '',
     discordTag: row.discord_tag ?? '',
     isAvailable: row.is_available ?? false,
+    bannerType: row.banner_type ?? 'COLOR',
+    bannerColor: row.banner_color ?? null,
+    bannerImageUrl: row.banner_image_url ?? null,
     updatedAt: row.updated_at,
   };
 }
@@ -314,6 +317,9 @@ export function DatabaseProvider({ children }) {
         bio: profileData.bio,
         discord_tag: profileData.discordTag,
         is_available: profileData.isAvailable,
+        banner_type: profileData.bannerType ?? 'COLOR',
+        banner_color: profileData.bannerColor ?? null,
+        banner_image_url: profileData.bannerImageUrl ?? null,
         updated_at: new Date().toISOString(),
       };
       const { error } = await supabase.from('profiles').upsert(row);
@@ -321,6 +327,20 @@ export function DatabaseProvider({ children }) {
       await refreshProfiles();
     },
     [refreshProfiles]
+  );
+
+  const uploadBannerImage = useCallback(
+    async (file) => {
+      const extension = file.name.split('.').pop().toLowerCase();
+      const path = `${currentUser.id}/banner-${Date.now()}.${extension}`;
+      const { error } = await supabase.storage
+        .from('banners')
+        .upload(path, file, { cacheControl: '3600', upsert: true });
+      if (error) throw new Error(error.message);
+      const { data } = supabase.storage.from('banners').getPublicUrl(path);
+      return data.publicUrl;
+    },
+    [currentUser]
   );
 
   const setAvailability = useCallback(
@@ -580,6 +600,7 @@ export function DatabaseProvider({ children }) {
       getGameProfilesByUserId,
       getGameProfile,
       upsertProfile,
+      uploadBannerImage,
       setAvailability,
       upsertGameProfile,
       deleteGameProfile,
@@ -616,6 +637,7 @@ export function DatabaseProvider({ children }) {
       getGameProfilesByUserId,
       getGameProfile,
       upsertProfile,
+      uploadBannerImage,
       setAvailability,
       upsertGameProfile,
       deleteGameProfile,

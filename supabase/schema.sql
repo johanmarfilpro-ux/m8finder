@@ -142,6 +142,12 @@ create table if not exists public.profiles (
   -- plutot qu'une liste de creneaux horaires declares a l'avance. Commun
   -- a tous les jeux du joueur.
   is_available boolean not null default false,
+  -- Banniere de profil : soit une couleur/degrade preset (banner_color =
+  -- cle choisie parmi une liste fixe cote frontend), soit une image
+  -- importee (banner_image_url = URL publique dans le bucket "banners").
+  banner_type text not null default 'COLOR' check (banner_type in ('COLOR', 'IMAGE')),
+  banner_color text,
+  banner_image_url text,
   updated_at timestamptz not null default now()
 );
 
@@ -538,6 +544,34 @@ create policy "messages_update_mark_read" on public.messages
 drop policy if exists "messages_select_admin" on public.messages;
 create policy "messages_select_admin" on public.messages
   for select using (public.is_admin());
+
+-- ---------------------------------------------------------------------
+-- Stockage des images de banniere de profil. Chemin attendu :
+-- "{user_id}/banner-<timestamp>.<ext>" pour que la policy puisse verifier
+-- que chacun n'ecrit que dans son propre dossier.
+-- ---------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('banners', 'banners', true)
+on conflict (id) do nothing;
+
+drop policy if exists "banner_images_select_public" on storage.objects;
+create policy "banner_images_select_public" on storage.objects
+  for select using (bucket_id = 'banners');
+
+drop policy if exists "banner_images_insert_own" on storage.objects;
+create policy "banner_images_insert_own" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'banners' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "banner_images_update_own" on storage.objects;
+create policy "banner_images_update_own" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'banners' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "banner_images_delete_own" on storage.objects;
+create policy "banner_images_delete_own" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'banners' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- ---------------------------------------------------------------------
 -- Seed des 2 comptes admin (a executer APRES leur inscription normale

@@ -10,6 +10,26 @@ export const REPORT_STATUS = {
   DISMISSED: 'REJETE',
 };
 
+// Presets de banniere de profil : la base ne stocke que la cle choisie
+// (banner_color), jamais le degrade en clair, pour eviter d'injecter du
+// CSS arbitraire venu de la base dans un attribut style.
+export const BANNER_PRESETS = [
+  { id: 'ENCRE', label: 'Encre', css: 'linear-gradient(135deg, #0a0a0b, #3f3f46)' },
+  { id: 'BRUME', label: 'Brume', css: 'linear-gradient(135deg, #52525b, #f4f4f5)' },
+  { id: 'DUO', label: 'Duo', css: 'linear-gradient(135deg, #f4f4f5 0%, #f4f4f5 48%, #0a0a0b 52%, #0a0a0b 100%)' },
+  { id: 'BRAISE', label: 'Braise', css: 'linear-gradient(135deg, #0a0a0b, #7f1d1d)' },
+  { id: 'ECARLATE', label: 'Ecarlate', css: 'linear-gradient(135deg, #dc2626, #0a0a0b)' },
+  { id: 'OCEAN', label: 'Ocean', css: 'linear-gradient(135deg, #0a0a0b, #1e3a8a)' },
+  { id: 'EMERAUDE', label: 'Emeraude', css: 'linear-gradient(135deg, #0a0a0b, #065f46)' },
+  { id: 'OR', label: 'Or', css: 'linear-gradient(135deg, #0a0a0b, #b45309)' },
+];
+
+export const DEFAULT_BANNER_PRESET_ID = 'ENCRE';
+
+export function getBannerPreset(presetId) {
+  return BANNER_PRESETS.find((preset) => preset.id === presetId) ?? BANNER_PRESETS[0];
+}
+
 export const REPORT_REASONS = [
   'Comportement toxique',
   'Propos injurieux',
