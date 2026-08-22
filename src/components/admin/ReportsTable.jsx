@@ -21,66 +21,105 @@ export default function ReportsTable({ reports, usersById, onBanReportedUser, on
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-surface-border">
-      <table className="min-w-full divide-y divide-surface-border text-sm">
-        <thead className="bg-surface-soft text-left text-xs uppercase tracking-wide text-slate-500">
-          <tr>
-            <th className="px-4 py-3">Signale</th>
-            <th className="px-4 py-3">Par</th>
-            <th className="px-4 py-3">Motif</th>
-            <th className="px-4 py-3">Statut</th>
-            <th className="px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-surface-border">
-          {reports.map((report) => {
-            const reportedUser = usersById[report.reportedUserId];
-            const reporterUser = usersById[report.reporterId];
-            return (
-              <tr key={report.id} className="align-top">
-                <td className="px-4 py-3 font-medium text-slate-200">
-                  {reportedUser?.username ?? 'Compte supprime'}
-                </td>
-                <td className="px-4 py-3 text-slate-400">{reporterUser?.username ?? 'Inconnu'}</td>
-                <td className="px-4 py-3 text-slate-400">
-                  <p>{report.reason}</p>
-                  {report.details && <p className="mt-1 text-xs text-slate-500">{report.details}</p>}
-                </td>
-                <td className="px-4 py-3">
-                  <Badge tone={STATUS_TONE[report.status]}>{report.status.replace('_', ' ')}</Badge>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    {report.status === REPORT_STATUS.PENDING && (
+    <>
+      {/* Mobile : une carte par signalement. */}
+      <div className="flex flex-col gap-3 sm:hidden">
+        {reports.map((report) => {
+          const reportedUser = usersById[report.reportedUserId];
+          const reporterUser = usersById[report.reporterId];
+          return (
+            <div key={report.id} className="rounded-xl border border-surface-border bg-surface-soft p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-medium text-slate-200">{reportedUser?.username ?? 'Compte supprime'}</p>
+                  <p className="text-xs text-slate-500">signale par {reporterUser?.username ?? 'Inconnu'}</p>
+                </div>
+                <Badge tone={STATUS_TONE[report.status]}>{report.status.replace('_', ' ')}</Badge>
+              </div>
+
+              <p className="mt-2 text-sm text-slate-400">{report.reason}</p>
+              {report.details && <p className="mt-1 text-xs text-slate-500">{report.details}</p>}
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {report.status === REPORT_STATUS.PENDING && (
+                  <Button
+                    variant="secondary"
+                    className="px-2 py-1 text-xs"
+                    onClick={() => updateReportStatus(report.id, REPORT_STATUS.DISMISSED)}
+                  >
+                    Rejeter
+                  </Button>
+                )}
+                <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => onSuspendReportedUser(report)}>
+                  Suspendre
+                </Button>
+                <Button variant="danger" className="px-2 py-1 text-xs" onClick={() => onBanReportedUser(report)}>
+                  Bannir
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop : tableau classique. */}
+      <div className="hidden overflow-x-auto rounded-xl border border-surface-border sm:block">
+        <table className="min-w-full divide-y divide-surface-border text-sm">
+          <thead className="bg-surface-soft text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3">Signale</th>
+              <th className="px-4 py-3">Par</th>
+              <th className="px-4 py-3">Motif</th>
+              <th className="px-4 py-3">Statut</th>
+              <th className="px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-surface-border">
+            {reports.map((report) => {
+              const reportedUser = usersById[report.reportedUserId];
+              const reporterUser = usersById[report.reporterId];
+              return (
+                <tr key={report.id} className="align-top">
+                  <td className="px-4 py-3 font-medium text-slate-200">
+                    {reportedUser?.username ?? 'Compte supprime'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-400">{reporterUser?.username ?? 'Inconnu'}</td>
+                  <td className="px-4 py-3 text-slate-400">
+                    <p>{report.reason}</p>
+                    {report.details && <p className="mt-1 text-xs text-slate-500">{report.details}</p>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge tone={STATUS_TONE[report.status]}>{report.status.replace('_', ' ')}</Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      {report.status === REPORT_STATUS.PENDING && (
+                        <Button
+                          variant="secondary"
+                          className="px-2 py-1 text-xs"
+                          onClick={() => updateReportStatus(report.id, REPORT_STATUS.DISMISSED)}
+                        >
+                          Rejeter
+                        </Button>
+                      )}
                       <Button
-                        variant="secondary"
+                        variant="ghost"
                         className="px-2 py-1 text-xs"
-                        onClick={() => updateReportStatus(report.id, REPORT_STATUS.DISMISSED)}
+                        onClick={() => onSuspendReportedUser(report)}
                       >
-                        Rejeter
+                        Suspendre
                       </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      className="px-2 py-1 text-xs"
-                      onClick={() => onSuspendReportedUser(report)}
-                    >
-                      Suspendre
-                    </Button>
-                    <Button
-                      variant="danger"
-                      className="px-2 py-1 text-xs"
-                      onClick={() => onBanReportedUser(report)}
-                    >
-                      Bannir
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                      <Button variant="danger" className="px-2 py-1 text-xs" onClick={() => onBanReportedUser(report)}>
+                        Bannir
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

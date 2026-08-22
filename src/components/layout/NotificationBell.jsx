@@ -53,7 +53,7 @@ export default function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-30 mt-2 w-80 rounded-xl border border-surface-border bg-surface-soft p-3 shadow-2xl">
+        <div className="absolute right-0 z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-surface-border bg-surface-soft p-3 shadow-2xl">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Notifications de match
           </p>

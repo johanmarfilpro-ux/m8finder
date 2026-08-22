@@ -1,4 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
 import Button from '../common/Button.jsx';
 import NotificationBell from './NotificationBell.jsx';
@@ -9,21 +10,70 @@ const linkClassName = ({ isActive }) =>
     isActive ? 'bg-brand-500/15 text-brand-300' : 'text-slate-300 hover:bg-surface-soft hover:text-slate-100'
   }`;
 
+const mobileLinkClassName = ({ isActive }) =>
+  `block rounded-lg px-3 py-2.5 text-base font-medium transition ${
+    isActive ? 'bg-brand-500/15 text-brand-300' : 'text-slate-300 hover:bg-surface-soft hover:text-slate-100'
+  }`;
+
+function BurgerIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5"
+    >
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
 export default function Navbar() {
   const { currentUser, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
 
   async function handleLogout() {
+    setIsMenuOpen(false);
     await logout();
     navigate('/connexion');
   }
 
   return (
     <header className="sticky top-0 z-20 border-b border-surface-border bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <NavLink to="/" className="flex items-center gap-2 text-lg font-bold text-slate-100">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm">M8</span>
-          M8Finder
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3">
+        <NavLink to="/" className="flex min-w-0 items-center gap-2 text-lg font-bold text-slate-100">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-sm">
+            M8
+          </span>
+          <span className="truncate">M8Finder</span>
         </NavLink>
 
         {isAuthenticated && (
@@ -42,15 +92,26 @@ export default function Navbar() {
           </nav>
         )}
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {isAuthenticated ? (
             <>
-              <AvailabilityToggle />
+              <div className="hidden sm:block">
+                <AvailabilityToggle />
+              </div>
               <NotificationBell />
               <span className="hidden text-sm text-slate-400 sm:inline">{currentUser.username}</span>
-              <Button variant="ghost" onClick={handleLogout}>
+              <Button variant="ghost" onClick={handleLogout} className="hidden sm:inline-flex">
                 Deconnexion
               </Button>
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen((prev) => !prev)}
+                aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+                aria-expanded={isMenuOpen}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-surface-border bg-surface-soft text-slate-300 hover:text-slate-100 sm:hidden"
+              >
+                {isMenuOpen ? <CloseIcon /> : <BurgerIcon />}
+              </button>
             </>
           ) : (
             <>
@@ -65,20 +126,31 @@ export default function Navbar() {
         </div>
       </div>
 
-      {isAuthenticated && (
-        <nav className="flex items-center gap-1 overflow-x-auto border-t border-surface-border px-4 py-2 sm:hidden">
-          <NavLink to="/recherche" className={linkClassName}>
-            Rechercher
-          </NavLink>
-          <NavLink to="/profil" className={linkClassName}>
-            Mon profil
-          </NavLink>
-          {isAdmin && (
-            <NavLink to="/admin" className={linkClassName}>
-              Administration
+      {isAuthenticated && isMenuOpen && (
+        <div className="border-t border-surface-border px-4 py-3 sm:hidden">
+          <nav className="flex flex-col gap-1">
+            <NavLink to="/recherche" className={mobileLinkClassName}>
+              Rechercher
             </NavLink>
-          )}
-        </nav>
+            <NavLink to="/profil" className={mobileLinkClassName}>
+              Mon profil
+            </NavLink>
+            {isAdmin && (
+              <NavLink to="/admin" className={mobileLinkClassName}>
+                Administration
+              </NavLink>
+            )}
+          </nav>
+
+          <div className="mt-3 flex items-center justify-between border-t border-surface-border pt-3">
+            <span className="text-sm text-slate-400">{currentUser.username}</span>
+            <AvailabilityToggle />
+          </div>
+
+          <Button variant="ghost" onClick={handleLogout} className="mt-3 w-full">
+            Deconnexion
+          </Button>
+        </div>
       )}
     </header>
   );

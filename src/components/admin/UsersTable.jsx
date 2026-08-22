@@ -21,59 +21,107 @@ export default function UsersTable({ players }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-surface-border">
-      <table className="min-w-full divide-y divide-surface-border text-sm">
-        <thead className="bg-surface-soft text-left text-xs uppercase tracking-wide text-slate-500">
-          <tr>
-            <th className="px-4 py-3">Pseudo</th>
-            <th className="px-4 py-3">Email</th>
-            <th className="px-4 py-3">Statut</th>
-            <th className="px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-surface-border">
-          {players.map((user) => (
-            <tr key={user.id}>
-              <td className="px-4 py-3 font-medium text-slate-200">{user.username}</td>
-              <td className="px-4 py-3 text-slate-400">{user.email}</td>
-              <td className="px-4 py-3">
-                <Badge tone={STATUS_TONE[user.status]}>{user.status}</Badge>
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex flex-wrap gap-2">
-                  {user.status !== ACCOUNT_STATUS.ACTIVE && (
-                    <Button
-                      variant="secondary"
-                      className="px-2 py-1 text-xs"
-                      onClick={() => setUserStatus(user.id, ACCOUNT_STATUS.ACTIVE)}
-                    >
-                      Reactiver
-                    </Button>
-                  )}
-                  {user.status !== ACCOUNT_STATUS.SUSPENDED && (
-                    <Button
-                      variant="ghost"
-                      className="px-2 py-1 text-xs"
-                      onClick={() => setUserStatus(user.id, ACCOUNT_STATUS.SUSPENDED)}
-                    >
-                      Suspendre
-                    </Button>
-                  )}
-                  {user.status !== ACCOUNT_STATUS.BANNED && (
-                    <Button
-                      variant="danger"
-                      className="px-2 py-1 text-xs"
-                      onClick={() => setUserStatus(user.id, ACCOUNT_STATUS.BANNED)}
-                    >
-                      Bannir
-                    </Button>
-                  )}
-                </div>
-              </td>
+    <>
+      {/* Mobile : une carte par compte. */}
+      <div className="flex flex-col gap-3 sm:hidden">
+        {players.map((user) => (
+          <div key={user.id} className="rounded-xl border border-surface-border bg-surface-soft p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate font-medium text-slate-200">{user.username}</p>
+                <p className="truncate text-xs text-slate-500">{user.email}</p>
+              </div>
+              <Badge tone={STATUS_TONE[user.status]}>{user.status}</Badge>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {user.status !== ACCOUNT_STATUS.ACTIVE && (
+                <Button
+                  variant="secondary"
+                  className="px-2 py-1 text-xs"
+                  onClick={() => setUserStatus(user.id, ACCOUNT_STATUS.ACTIVE)}
+                >
+                  Reactiver
+                </Button>
+              )}
+              {user.status !== ACCOUNT_STATUS.SUSPENDED && (
+                <Button
+                  variant="ghost"
+                  className="px-2 py-1 text-xs"
+                  onClick={() => setUserStatus(user.id, ACCOUNT_STATUS.SUSPENDED)}
+                >
+                  Suspendre
+                </Button>
+              )}
+              {user.status !== ACCOUNT_STATUS.BANNED && (
+                <Button
+                  variant="danger"
+                  className="px-2 py-1 text-xs"
+                  onClick={() => setUserStatus(user.id, ACCOUNT_STATUS.BANNED)}
+                >
+                  Bannir
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop : tableau classique. */}
+      <div className="hidden overflow-x-auto rounded-xl border border-surface-border sm:block">
+        <table className="min-w-full divide-y divide-surface-border text-sm">
+          <thead className="bg-surface-soft text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3">Pseudo</th>
+              <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Statut</th>
+              <th className="px-4 py-3">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody className="divide-y divide-surface-border">
+            {players.map((user) => (
+              <tr key={user.id}>
+                <td className="px-4 py-3 font-medium text-slate-200">{user.username}</td>
+                <td className="px-4 py-3 text-slate-400">{user.email}</td>
+                <td className="px-4 py-3">
+                  <Badge tone={STATUS_TONE[user.status]}>{user.status}</Badge>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-2">
+                    {user.status !== ACCOUNT_STATUS.ACTIVE && (
+                      <Button
+                        variant="secondary"
+                        className="px-2 py-1 text-xs"
+                        onClick={() => setUserStatus(user.id, ACCOUNT_STATUS.ACTIVE)}
+                      >
+                        Reactiver
+                      </Button>
+                    )}
+                    {user.status !== ACCOUNT_STATUS.SUSPENDED && (
+                      <Button
+                        variant="ghost"
+                        className="px-2 py-1 text-xs"
+                        onClick={() => setUserStatus(user.id, ACCOUNT_STATUS.SUSPENDED)}
+                      >
+                        Suspendre
+                      </Button>
+                    )}
+                    {user.status !== ACCOUNT_STATUS.BANNED && (
+                      <Button
+                        variant="danger"
+                        className="px-2 py-1 text-xs"
+                        onClick={() => setUserStatus(user.id, ACCOUNT_STATUS.BANNED)}
+                      >
+                        Bannir
+                      </Button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
