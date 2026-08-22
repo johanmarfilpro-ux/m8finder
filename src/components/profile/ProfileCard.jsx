@@ -28,7 +28,7 @@ export default function ProfileCard({ profile, gameProfile, game }) {
         )}
       </div>
 
-      <p className="line-clamp-2 text-sm text-slate-400">{profile.bio || 'Pas encore de bio.'}</p>
+      {profile.bio && <p className="line-clamp-2 text-sm text-slate-400">{profile.bio}</p>}
 
       <div className="flex flex-wrap gap-1.5">
         {gameProfile.platform !== 'NONE' && (
