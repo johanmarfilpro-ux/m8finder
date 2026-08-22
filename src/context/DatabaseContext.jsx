@@ -392,16 +392,15 @@ export function DatabaseProvider({ children }) {
   );
 
   const createReport = useCallback(
-    async ({ reporterId, reportedUserId, reason, details, messageId = null }) => {
+    async ({ reportedUserId, reason, details, messageId = null }) => {
       if (isUserAdmin(reportedUserId)) {
         throw new Error('Les comptes administrateurs ne peuvent pas etre signales.');
       }
-      const { error } = await supabase.from('reports').insert({
-        reporter_id: reporterId,
-        reported_user_id: reportedUserId,
-        reason,
-        details,
-        message_id: messageId,
+      const { error } = await supabase.rpc('create_report', {
+        p_reported_user_id: reportedUserId,
+        p_reason: reason,
+        p_details: details ?? '',
+        p_message_id: messageId,
       });
       if (error) throw new Error(error.message);
       await refreshReports();

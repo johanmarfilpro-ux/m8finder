@@ -54,7 +54,7 @@ export default function PlayerProfilePage() {
 
   async function handleReportSubmit({ reason, details }) {
     try {
-      await createReport({ reporterId: currentUser.id, reportedUserId: userId, reason, details });
+      await createReport({ reportedUserId: userId, reason, details });
       setIsReportOpen(false);
       showToast('Signalement envoye. Un administrateur va examiner ce profil.', 'success');
     } catch (error) {

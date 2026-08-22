@@ -88,7 +88,6 @@ export default function ConversationPage() {
   async function handleReportSubmit({ reason, details }) {
     try {
       await createReport({
-        reporterId: currentUser.id,
         reportedUserId: otherUserId,
         reason,
         details,
