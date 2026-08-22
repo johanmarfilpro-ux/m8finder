@@ -41,3 +41,27 @@ export function getRankLabel(game, tier, division) {
 export function getPlatformLabel(game, platformValue) {
   return game?.platforms.find((p) => p.value === platformValue)?.label ?? platformValue;
 }
+
+// Un joueur peut avoir un profil par plateforme pour un jeu qui en definit
+// (ex: un profil PC et un profil Console pour Valorant), mais un seul
+// profil pour un jeu sans plateforme. Ces helpers calculent les "places"
+// encore libres pour un jeu donne, en excluant eventuellement le profil
+// en cours d'edition (excludeGameProfileId) de la liste des places prises.
+
+export function getUsedPlatformValues(game, existingGameProfiles, excludeGameProfileId) {
+  return existingGameProfiles
+    .filter((gp) => gp.gameId === game.id && gp.id !== excludeGameProfileId)
+    .map((gp) => gp.platform);
+}
+
+export function getAvailablePlatforms(game, existingGameProfiles, excludeGameProfileId) {
+  const used = getUsedPlatformValues(game, existingGameProfiles, excludeGameProfileId);
+  return game.platforms.filter((p) => !used.includes(p.value));
+}
+
+export function gameHasFreeSlot(game, existingGameProfiles, excludeGameProfileId) {
+  if (game.platforms.length === 0) {
+    return getUsedPlatformValues(game, existingGameProfiles, excludeGameProfileId).length === 0;
+  }
+  return getAvailablePlatforms(game, existingGameProfiles, excludeGameProfileId).length > 0;
+}

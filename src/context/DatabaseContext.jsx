@@ -241,8 +241,19 @@ export function DatabaseProvider({ children }) {
         platform: gameProfileData.platform,
         updated_at: new Date().toISOString(),
       };
-      const { error } = await supabase.from('game_profiles').upsert(row, { onConflict: 'user_id,game_id' });
-      if (error) throw new Error(error.message);
+      // Modifier un profil existant se fait par son id (pas par upsert sur
+      // la cle naturelle) : si l'utilisateur change de plateforme, upserter
+      // sur (user_id, game_id, platform) risquerait de fusionner par erreur
+      // avec un AUTRE profil de jeu deja existant sur cette plateforme.
+      const { error } = gameProfileData.id
+        ? await supabase.from('game_profiles').update(row).eq('id', gameProfileData.id)
+        : await supabase.from('game_profiles').insert(row);
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('Tu as deja un profil pour ce jeu sur cette plateforme.');
+        }
+        throw new Error(error.message);
+      }
       await refreshGameProfiles();
     },
     [refreshGameProfiles]

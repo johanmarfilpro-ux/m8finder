@@ -136,7 +136,11 @@ create table if not exists public.profiles (
 
 -- ---------------------------------------------------------------------
 -- 5. Profils de jeu : un joueur peut avoir un profil par jeu (role(s),
---    rang, identifiant in-game), au plus un par (user_id, game_id).
+--    rang, identifiant in-game). Pour un jeu qui definit des plateformes
+--    (voir games.platforms), un joueur peut avoir un profil par
+--    plateforme (ex: un profil PC et un profil Console pour Valorant),
+--    mais pas deux profils sur la meme plateforme. Pour un jeu sans
+--    plateforme, "platform" vaut 'NONE' et un seul profil est autorise.
 -- ---------------------------------------------------------------------
 create table if not exists public.game_profiles (
   id uuid primary key default gen_random_uuid(),
@@ -146,11 +150,9 @@ create table if not exists public.game_profiles (
   roles text[] not null default '{}',
   rank_tier text not null,
   rank_division text,
-  -- Plateforme (PC/Console...) : nulle si le jeu ne definit pas de
-  -- plateformes (voir games.platforms).
-  platform text,
+  platform text not null default 'NONE',
   updated_at timestamptz not null default now(),
-  unique (user_id, game_id)
+  unique (user_id, game_id, platform)
 );
 
 -- ---------------------------------------------------------------------

@@ -21,7 +21,9 @@ export default function GameProfileCard({ game, gameProfile, onEdit, onDelete })
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {gameProfile.platform && <Badge tone="neutral">{getPlatformLabel(game, gameProfile.platform)}</Badge>}
+        {gameProfile.platform !== 'NONE' && (
+          <Badge tone="neutral">{getPlatformLabel(game, gameProfile.platform)}</Badge>
+        )}
         {gameProfile.roles.map((role) => (
           <Badge key={role} tone="brand">
             {getRoleLabel(game, role)}

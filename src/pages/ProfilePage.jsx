@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth.js';
 import { useDatabase } from '../hooks/useDatabase.js';
 import { useToast } from '../hooks/useToast.js';
+import { gameHasFreeSlot } from '../data/constants.js';
 import AccountProfileForm from '../components/profile/AccountProfileForm.jsx';
 import GameProfileForm from '../components/profile/GameProfileForm.jsx';
 import GameProfileCard from '../components/profile/GameProfileCard.jsx';
@@ -25,9 +26,7 @@ export default function ProfilePage() {
 
   const accountProfile = getProfileByUserId(currentUser.id);
   const myGameProfiles = getGameProfilesByUserId(currentUser.id);
-  const availableGameIds = games
-    .map((game) => game.id)
-    .filter((gameId) => !myGameProfiles.some((gameProfile) => gameProfile.gameId === gameId));
+  const canAddGameProfile = games.some((game) => gameHasFreeSlot(game, myGameProfiles));
 
   async function handleAccountSubmit(profileData) {
     setIsSubmittingAccount(true);
@@ -83,7 +82,7 @@ export default function ProfilePage() {
       <div className="mt-10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-100">Mes jeux</h2>
-          {availableGameIds.length > 0 && editingGameProfileId !== 'new' && (
+          {canAddGameProfile && editingGameProfileId !== 'new' && (
             <Button variant="secondary" onClick={() => setEditingGameProfileId('new')}>
               + Ajouter un jeu
             </Button>
@@ -96,7 +95,7 @@ export default function ProfilePage() {
               <GameProfileForm
                 key={gameProfile.id}
                 games={games}
-                availableGameIds={availableGameIds}
+                existingGameProfiles={myGameProfiles}
                 initialGameProfile={gameProfile}
                 onSubmit={handleGameProfileSubmit}
                 onCancel={() => setEditingGameProfileId(null)}
@@ -116,7 +115,7 @@ export default function ProfilePage() {
           {editingGameProfileId === 'new' && (
             <GameProfileForm
               games={games}
-              availableGameIds={availableGameIds}
+              existingGameProfiles={myGameProfiles}
               onSubmit={handleGameProfileSubmit}
               onCancel={() => setEditingGameProfileId(null)}
               isSubmitting={isSubmittingGameProfile}

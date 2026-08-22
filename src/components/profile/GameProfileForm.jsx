@@ -1,22 +1,27 @@
 import { useMemo, useState } from 'react';
-import { rankHasDivision } from '../../data/constants.js';
+import { gameHasFreeSlot, getAvailablePlatforms, rankHasDivision } from '../../data/constants.js';
 import Button from '../common/Button.jsx';
 import FormField, { inputClassName } from '../common/FormField.jsx';
 import ChipMultiSelect from '../common/ChipMultiSelect.jsx';
 
 export default function GameProfileForm({
   games,
-  availableGameIds,
+  existingGameProfiles,
   initialGameProfile,
   onSubmit,
   onCancel,
   isSubmitting,
 }) {
   const isEditing = Boolean(initialGameProfile);
-  const selectableGames = isEditing ? games : games.filter((game) => availableGameIds.includes(game.id));
+  const selectableGames = isEditing
+    ? games
+    : games.filter((game) => gameHasFreeSlot(game, existingGameProfiles));
   const initialGame = isEditing
     ? games.find((game) => game.id === initialGameProfile.gameId)
     : selectableGames[0];
+  const initialAvailablePlatforms = initialGame
+    ? getAvailablePlatforms(initialGame, existingGameProfiles, initialGameProfile?.id)
+    : [];
 
   const [gameId, setGameId] = useState(initialGameProfile?.gameId ?? initialGame?.id ?? '');
   const [inGameId, setInGameId] = useState(initialGameProfile?.inGameId ?? '');
@@ -26,13 +31,19 @@ export default function GameProfileForm({
     initialGameProfile?.rankDivision ?? initialGame?.divisions[0] ?? null
   );
   const [platform, setPlatform] = useState(
-    initialGameProfile?.platform ?? initialGame?.platforms[0]?.value ?? null
+    initialGameProfile && initialGameProfile.platform !== 'NONE'
+      ? initialGameProfile.platform
+      : initialAvailablePlatforms[0]?.value ?? null
   );
   const [validationError, setValidationError] = useState('');
 
   const game = useMemo(() => games.find((g) => g.id === gameId) ?? null, [games, gameId]);
   const requiresDivision = game ? rankHasDivision(game, rankTier) : false;
   const requiresPlatform = (game?.platforms.length ?? 0) > 0;
+  const availablePlatforms = useMemo(
+    () => (game ? getAvailablePlatforms(game, existingGameProfiles, initialGameProfile?.id) : []),
+    [game, existingGameProfiles, initialGameProfile]
+  );
 
   function handleGameChange(event) {
     const nextGameId = event.target.value;
@@ -41,7 +52,8 @@ export default function GameProfileForm({
     setRoles([]);
     setRankTier(nextGame?.ranks[0]?.value ?? '');
     setRankDivision(nextGame?.divisions[0] ?? null);
-    setPlatform(nextGame?.platforms[0]?.value ?? null);
+    const nextAvailablePlatforms = nextGame ? getAvailablePlatforms(nextGame, existingGameProfiles) : [];
+    setPlatform(nextAvailablePlatforms[0]?.value ?? null);
   }
 
   function handleRankChange(event) {
@@ -66,19 +78,20 @@ export default function GameProfileForm({
     }
     setValidationError('');
     onSubmit({
+      id: initialGameProfile?.id,
       gameId,
       inGameId,
       roles,
       rankTier,
       rankDivision: requiresDivision ? rankDivision : null,
-      platform: requiresPlatform ? platform : null,
+      platform: requiresPlatform ? platform : 'NONE',
     });
   }
 
   if (!isEditing && selectableGames.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-surface-border p-4 text-sm text-slate-500">
-        Tu as deja un profil pour tous les jeux disponibles.
+        Tu as deja un profil pour tous les jeux (et plateformes) disponibles.
       </p>
     );
   }
@@ -126,7 +139,7 @@ export default function GameProfileForm({
             value={platform ?? ''}
             onChange={(event) => setPlatform(event.target.value)}
           >
-            {(game?.platforms ?? []).map((platformOption) => (
+            {availablePlatforms.map((platformOption) => (
               <option key={platformOption.value} value={platformOption.value}>
                 {platformOption.label}
               </option>

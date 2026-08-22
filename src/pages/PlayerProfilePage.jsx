@@ -96,7 +96,7 @@ export default function PlayerProfilePage() {
                     <p className="text-xs text-slate-500">{gameProfile.inGameId}</p>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {gameProfile.platform && (
+                    {gameProfile.platform !== 'NONE' && (
                       <Badge tone="neutral">{getPlatformLabel(game, gameProfile.platform)}</Badge>
                     )}
                     {gameProfile.roles.map((role) => (
