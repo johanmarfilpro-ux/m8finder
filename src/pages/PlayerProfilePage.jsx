@@ -29,7 +29,7 @@ export default function PlayerProfilePage() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
         <p className="text-slate-400">Ce profil n'existe pas ou plus.</p>
-        <Link to="/recherche" className="mt-4 inline-block text-brand-400 hover:text-brand-300">
+        <Link to="/recherche" className="mt-4 inline-block text-yang-300 hover:text-yang-50">
           Retour a la recherche
         </Link>
       </div>

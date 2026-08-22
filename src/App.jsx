@@ -15,6 +15,7 @@ import NotFoundPage from './pages/NotFoundPage.jsx';
 export default function App() {
   return (
     <div className="min-h-screen bg-surface">
+      <div className="h-[3px] w-full bg-gradient-to-r from-yin-900 via-yang-500 to-yang-50" />
       <Navbar />
       <main>
         <Routes>

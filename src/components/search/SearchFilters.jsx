@@ -47,7 +47,7 @@ export default function SearchFilters({ game, filters, onChange }) {
           type="checkbox"
           checked={filters.onlyAvailable}
           onChange={(event) => updateFilter('onlyAvailable', event.target.checked)}
-          className="h-4 w-4 rounded border-surface-border bg-surface-soft text-brand-500 focus:ring-1 focus:ring-brand-500"
+          className="h-4 w-4 rounded border-surface-border bg-surface-soft text-yang-300 focus:ring-1 focus:ring-yang-300"
         />
         Uniquement les joueurs disponibles maintenant
       </label>

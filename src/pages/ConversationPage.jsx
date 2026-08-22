@@ -62,7 +62,7 @@ export default function ConversationPage() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
         <p className="text-slate-400">Cette conversation n'existe pas ou plus.</p>
-        <Link to="/messages" className="mt-4 inline-block text-brand-400 hover:text-brand-300">
+        <Link to="/messages" className="mt-4 inline-block text-yang-300 hover:text-yang-50">
           Retour aux messages
         </Link>
       </div>
@@ -134,7 +134,7 @@ export default function ConversationPage() {
                     <div
                       className={`rounded-2xl px-3.5 py-2 text-sm ${
                         isOwn
-                          ? 'rounded-br-sm bg-brand-500 text-white'
+                          ? 'rounded-br-sm bg-yang-100 text-yin-900'
                           : 'rounded-bl-sm border border-surface-border bg-surface-soft text-slate-200'
                       }`}
                     >

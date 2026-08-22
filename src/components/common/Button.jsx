@@ -1,5 +1,5 @@
 const VARIANT_CLASSES = {
-  primary: 'bg-brand-500 hover:bg-brand-400 text-white shadow-brand-900/40',
+  primary: 'bg-yang-100 hover:bg-yang-50 text-yin-900 shadow-black/40',
   secondary: 'bg-surface-soft hover:bg-surface-border text-slate-100 border border-surface-border',
   danger: 'bg-red-600 hover:bg-red-500 text-white',
   ghost: 'bg-transparent hover:bg-surface-soft text-slate-300 border border-transparent',

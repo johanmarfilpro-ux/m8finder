@@ -5,15 +5,16 @@ import { useDatabase } from '../../hooks/useDatabase.js';
 import Button from '../common/Button.jsx';
 import NotificationBell from './NotificationBell.jsx';
 import AvailabilityToggle from './AvailabilityToggle.jsx';
+import YinYangMark from '../common/YinYangMark.jsx';
 
 const linkClassName = ({ isActive }) =>
   `rounded-lg px-3 py-2 text-sm font-medium transition ${
-    isActive ? 'bg-brand-500/15 text-brand-300' : 'text-slate-300 hover:bg-surface-soft hover:text-slate-100'
+    isActive ? 'bg-yang-50 text-yin-900' : 'text-slate-300 hover:bg-surface-soft hover:text-slate-100'
   }`;
 
 const mobileLinkClassName = ({ isActive }) =>
   `block rounded-lg px-3 py-2.5 text-base font-medium transition ${
-    isActive ? 'bg-brand-500/15 text-brand-300' : 'text-slate-300 hover:bg-surface-soft hover:text-slate-100'
+    isActive ? 'bg-yang-50 text-yin-900' : 'text-slate-300 hover:bg-surface-soft hover:text-slate-100'
   }`;
 
 function BurgerIcon() {
@@ -73,9 +74,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-20 border-b border-surface-border bg-surface/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3">
         <NavLink to="/" className="flex min-w-0 items-center gap-2 text-lg font-bold text-slate-100">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-sm">
-            M8
-          </span>
+          <YinYangMark className="h-8 w-8 shrink-0" />
           <span className="truncate">M8Finder</span>
         </NavLink>
 
@@ -87,7 +86,7 @@ export default function Navbar() {
             <NavLink to="/messages" className={linkClassName}>
               Messages
               {unreadMessageCount > 0 && (
-                <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold text-white">
+                <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-yang-100 px-1 text-[10px] font-bold text-yin-900">
                   {unreadMessageCount}
                 </span>
               )}
@@ -144,7 +143,7 @@ export default function Navbar() {
             <NavLink to="/messages" className={mobileLinkClassName}>
               Messages
               {unreadMessageCount > 0 && (
-                <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold text-white">
+                <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-yang-100 px-1 text-[10px] font-bold text-yin-900">
                   {unreadMessageCount}
                 </span>
               )}

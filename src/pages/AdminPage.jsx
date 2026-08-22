@@ -84,7 +84,7 @@ export default function AdminPage() {
             onClick={() => setActiveTab(tab.value)}
             className={`px-3 py-2 text-sm font-medium transition ${
               activeTab === tab.value
-                ? 'border-b-2 border-brand-500 text-brand-300'
+                ? 'border-b-2 border-yang-100 text-yang-50'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >

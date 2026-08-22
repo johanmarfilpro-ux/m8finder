@@ -10,7 +10,7 @@ export default function ProfileCard({ profile, gameProfile, game }) {
   return (
     <Link
       to={`/joueurs/${profile.userId}`}
-      className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface-soft p-4 transition hover:border-brand-500/50 hover:bg-surface-border/60"
+      className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface-soft p-4 transition hover:border-yang-300/50 hover:bg-surface-border/60"
     >
       <div className="flex items-start justify-between gap-2">
         <div>

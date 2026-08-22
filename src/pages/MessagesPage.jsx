@@ -26,7 +26,7 @@ export default function MessagesPage() {
       {sortedConversations.length === 0 ? (
         <p className="rounded-xl border border-dashed border-surface-border p-6 text-center text-sm text-slate-500">
           Aucune conversation pour le moment. Contacte un joueur depuis la{' '}
-          <Link to="/recherche" className="text-brand-400 hover:text-brand-300">
+          <Link to="/recherche" className="text-yang-300 hover:text-yang-50">
             recherche
           </Link>{' '}
           pour demarrer une discussion.
@@ -46,7 +46,7 @@ export default function MessagesPage() {
               <li key={conversation.id}>
                 <Link
                   to={`/messages/${conversation.id}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-surface-border bg-surface-soft px-4 py-3 transition hover:border-brand-500/40"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-surface-border bg-surface-soft px-4 py-3 transition hover:border-yang-300/40"
                 >
                   <div className="min-w-0">
                     <p className={`truncate font-medium ${isOtherAdmin ? 'text-orange-400' : 'text-slate-100'}`}>
@@ -56,7 +56,7 @@ export default function MessagesPage() {
                     <p className="text-xs text-slate-500">{formatRelativeTime(conversation.lastMessageAt)}</p>
                   </div>
                   {unreadCount > 0 && (
-                    <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-brand-500 px-1.5 text-xs font-bold text-white">
+                    <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-yang-100 px-1.5 text-xs font-bold text-yin-900">
                       {unreadCount}
                     </span>
                   )}

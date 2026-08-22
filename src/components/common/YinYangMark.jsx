@@ -1,0 +1,14 @@
+export default function YinYangMark({ className = 'h-8 w-8' }) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} role="img" aria-label="M8Finder">
+      <circle cx="50" cy="50" r="48" fill="#f4f4f5" />
+      <path
+        d="M50,2 A48,48 0 0,1 50,98 A24,24 0 0,1 50,50 A24,24 0 0,0 50,2 Z"
+        fill="#0d0d10"
+      />
+      <circle cx="50" cy="26" r="8" fill="#f4f4f5" />
+      <circle cx="50" cy="74" r="8" fill="#0d0d10" />
+      <circle cx="50" cy="50" r="48" fill="none" stroke="#3f3f46" strokeWidth="1.5" />
+    </svg>
+  );
+}

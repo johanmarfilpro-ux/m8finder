@@ -46,7 +46,7 @@ export default function NotificationBell() {
       >
         🔔
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-yang-100 text-[10px] font-bold text-yin-900">
             {unreadCount}
           </span>
         )}

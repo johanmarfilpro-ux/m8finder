@@ -19,7 +19,7 @@ export default function ChipMultiSelect({ options, value, onChange }) {
             aria-pressed={isSelected}
             className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
               isSelected
-                ? 'border-brand-500 bg-brand-500/15 text-brand-300'
+                ? 'border-yang-100 bg-yang-100 text-yin-900'
                 : 'border-surface-border bg-surface-soft text-slate-400 hover:text-slate-200'
             }`}
           >
