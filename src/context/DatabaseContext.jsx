@@ -51,6 +51,8 @@ function mapReportRow(row) {
     details: row.details,
     status: row.status,
     createdAt: row.created_at,
+    messageId: row.message_id ?? null,
+    reportedMessageContent: row.messages?.content ?? null,
   };
 }
 
@@ -62,6 +64,27 @@ function mapMatchAlertRow(row) {
     roles: row.roles ?? [],
     rankTiers: row.rank_tiers ?? [],
     platforms: row.platforms ?? [],
+    createdAt: row.created_at,
+  };
+}
+
+function mapConversationRow(row) {
+  return {
+    id: row.id,
+    userAId: row.user_a_id,
+    userBId: row.user_b_id,
+    createdAt: row.created_at,
+    lastMessageAt: row.last_message_at,
+  };
+}
+
+function mapMessageRow(row) {
+  return {
+    id: row.id,
+    conversationId: row.conversation_id,
+    senderId: row.sender_id,
+    content: row.content,
+    read: row.read,
     createdAt: row.created_at,
   };
 }
@@ -84,6 +107,8 @@ export function DatabaseProvider({ children }) {
   const [reports, setReports] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [matchAlerts, setMatchAlerts] = useState([]);
+  const [conversations, setConversations] = useState([]);
+  const [unreadMessages, setUnreadMessages] = useState([]);
   const [accountStatusByUserId, setAccountStatusByUserId] = useState({});
   const [adminUserIds, setAdminUserIds] = useState([]);
 
@@ -152,6 +177,42 @@ export function DatabaseProvider({ children }) {
     setMatchAlerts(data.map(mapMatchAlertRow));
   }, [currentUser]);
 
+  const refreshConversations = useCallback(async () => {
+    if (!currentUser) {
+      setConversations([]);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .order('last_message_at', { ascending: false });
+    if (error) {
+      console.error('Erreur chargement des conversations', error);
+      return;
+    }
+    setConversations(data.map(mapConversationRow));
+  }, [currentUser]);
+
+  const refreshUnreadMessages = useCallback(async () => {
+    if (!currentUser) {
+      setUnreadMessages([]);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('messages')
+      .select('id, conversation_id, sender_id')
+      .eq('read', false);
+    if (error) {
+      console.error('Erreur chargement des messages non lus', error);
+      return;
+    }
+    setUnreadMessages(
+      data
+        .filter((row) => row.sender_id !== currentUser.id)
+        .map((row) => ({ id: row.id, conversationId: row.conversation_id, senderId: row.sender_id }))
+    );
+  }, [currentUser]);
+
   const refreshReports = useCallback(async () => {
     if (!isAdmin) {
       setReports([]);
@@ -159,7 +220,7 @@ export function DatabaseProvider({ children }) {
     }
     const { data, error } = await supabase
       .from('reports')
-      .select('*')
+      .select('*, messages(content)')
       .order('created_at', { ascending: false });
     if (error) {
       console.error('Erreur chargement signalements', error);
@@ -193,6 +254,8 @@ export function DatabaseProvider({ children }) {
       setAccountStatusByUserId({});
       setAdminUserIds([]);
       setMatchAlerts([]);
+      setConversations([]);
+      setUnreadMessages([]);
       return;
     }
     refreshGames();
@@ -201,6 +264,8 @@ export function DatabaseProvider({ children }) {
     refreshStatuses();
     refreshAdminUserIds();
     refreshMatchAlerts();
+    refreshConversations();
+    refreshUnreadMessages();
   }, [
     currentUser,
     refreshGames,
@@ -209,6 +274,8 @@ export function DatabaseProvider({ children }) {
     refreshStatuses,
     refreshAdminUserIds,
     refreshMatchAlerts,
+    refreshConversations,
+    refreshUnreadMessages,
   ]);
 
   useEffect(() => {
@@ -325,7 +392,7 @@ export function DatabaseProvider({ children }) {
   );
 
   const createReport = useCallback(
-    async ({ reporterId, reportedUserId, reason, details }) => {
+    async ({ reporterId, reportedUserId, reason, details, messageId = null }) => {
       if (isUserAdmin(reportedUserId)) {
         throw new Error('Les comptes administrateurs ne peuvent pas etre signales.');
       }
@@ -334,6 +401,7 @@ export function DatabaseProvider({ children }) {
         reported_user_id: reportedUserId,
         reason,
         details,
+        message_id: messageId,
       });
       if (error) throw new Error(error.message);
       await refreshReports();
@@ -386,6 +454,82 @@ export function DatabaseProvider({ children }) {
     [refreshMatchAlerts]
   );
 
+  const getConversationWith = useCallback(
+    (otherUserId) =>
+      conversations.find(
+        (conversation) =>
+          (conversation.userAId === currentUser?.id && conversation.userBId === otherUserId) ||
+          (conversation.userBId === currentUser?.id && conversation.userAId === otherUserId)
+      ) ?? null,
+    [conversations, currentUser]
+  );
+
+  const getOrCreateConversation = useCallback(
+    async (otherUserId) => {
+      const existing = getConversationWith(otherUserId);
+      if (existing) return existing.id;
+
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert({ user_a_id: currentUser.id, user_b_id: otherUserId })
+        .select()
+        .single();
+
+      if (error) {
+        // Course possible si les deux joueurs demarrent la conversation en
+        // meme temps : l'index unique bloque le doublon, on relit alors la
+        // conversation deja creee par l'autre insert.
+        if (error.code === '23505') {
+          await refreshConversations();
+          const retry = getConversationWith(otherUserId);
+          if (retry) return retry.id;
+        }
+        throw new Error(error.message);
+      }
+
+      await refreshConversations();
+      return data.id;
+    },
+    [currentUser, getConversationWith, refreshConversations]
+  );
+
+  const fetchMessages = useCallback(async (conversationId) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+    if (error) throw new Error(error.message);
+    return data.map(mapMessageRow);
+  }, []);
+
+  const sendMessage = useCallback(
+    async ({ conversationId, content }) => {
+      const { error } = await supabase.from('messages').insert({
+        conversation_id: conversationId,
+        sender_id: currentUser.id,
+        content,
+      });
+      if (error) throw new Error(error.message);
+      await refreshConversations();
+    },
+    [currentUser, refreshConversations]
+  );
+
+  const markConversationRead = useCallback(
+    async (conversationId) => {
+      const { error } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', currentUser.id)
+        .eq('read', false);
+      if (error) throw new Error(error.message);
+      await refreshUnreadMessages();
+    },
+    [currentUser, refreshUnreadMessages]
+  );
+
   const listNotificationsForUser = useCallback(() => notifications, [notifications]);
 
   const addNotification = useCallback(
@@ -427,6 +571,8 @@ export function DatabaseProvider({ children }) {
       reports,
       notifications,
       matchAlerts,
+      conversations,
+      unreadMessages,
       accountStatusByUserId,
       adminUserIds,
       isUserAdmin,
@@ -448,6 +594,11 @@ export function DatabaseProvider({ children }) {
       markAllNotificationsRead,
       createMatchAlert,
       deleteMatchAlert,
+      getConversationWith,
+      getOrCreateConversation,
+      fetchMessages,
+      sendMessage,
+      markConversationRead,
     }),
     [
       games,
@@ -456,6 +607,8 @@ export function DatabaseProvider({ children }) {
       reports,
       notifications,
       matchAlerts,
+      conversations,
+      unreadMessages,
       accountStatusByUserId,
       adminUserIds,
       isUserAdmin,
@@ -477,6 +630,11 @@ export function DatabaseProvider({ children }) {
       markAllNotificationsRead,
       createMatchAlert,
       deleteMatchAlert,
+      getConversationWith,
+      getOrCreateConversation,
+      fetchMessages,
+      sendMessage,
+      markConversationRead,
     ]
   );
 

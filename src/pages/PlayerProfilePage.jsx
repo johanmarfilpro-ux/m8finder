@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useDatabase } from '../hooks/useDatabase.js';
 import { useToast } from '../hooks/useToast.js';
@@ -12,11 +12,14 @@ import ReportProfileModal from '../components/profile/ReportProfileModal.jsx';
 export default function PlayerProfilePage() {
   const { userId } = useParams();
   const { currentUser } = useAuth();
-  const { getProfileByUserId, getGameProfilesByUserId, getGameById, createReport, isUserAdmin } = useDatabase();
+  const { getProfileByUserId, getGameProfilesByUserId, getGameById, createReport, isUserAdmin, getOrCreateConversation } =
+    useDatabase();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isMessaging, setIsMessaging] = useState(false);
 
   const profile = getProfileByUserId(userId);
   const gameProfiles = getGameProfilesByUserId(userId);
@@ -35,6 +38,18 @@ export default function PlayerProfilePage() {
 
   if (userId === currentUser.id) {
     return <Navigate to="/profil" replace />;
+  }
+
+  async function handleSendMessage() {
+    setIsMessaging(true);
+    try {
+      const conversationId = await getOrCreateConversation(userId);
+      navigate(`/messages/${conversationId}`);
+    } catch (error) {
+      showToast(`Erreur lors de la creation de la conversation : ${error.message}`, 'error');
+    } finally {
+      setIsMessaging(false);
+    }
   }
 
   async function handleReportSubmit({ reason, details }) {
@@ -68,7 +83,10 @@ export default function PlayerProfilePage() {
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          <Button variant="primary" onClick={() => setIsContactOpen(true)}>
+          <Button variant="primary" onClick={handleSendMessage} disabled={isMessaging}>
+            Envoyer un message
+          </Button>
+          <Button variant="secondary" onClick={() => setIsContactOpen(true)}>
             Contacter
           </Button>
           {!isProfileAdmin && (

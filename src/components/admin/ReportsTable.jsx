@@ -39,6 +39,11 @@ export default function ReportsTable({ reports, usersById, onBanReportedUser, on
 
               <p className="mt-2 text-sm text-slate-400">{report.reason}</p>
               {report.details && <p className="mt-1 text-xs text-slate-500">{report.details}</p>}
+              {report.reportedMessageContent && (
+                <p className="mt-2 rounded-lg border border-surface-border bg-surface px-2 py-1.5 text-xs text-slate-400">
+                  Message signale : « {report.reportedMessageContent} »
+                </p>
+              )}
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {report.status === REPORT_STATUS.PENDING && (
@@ -87,6 +92,11 @@ export default function ReportsTable({ reports, usersById, onBanReportedUser, on
                   <td className="px-4 py-3 text-slate-400">
                     <p>{report.reason}</p>
                     {report.details && <p className="mt-1 text-xs text-slate-500">{report.details}</p>}
+                    {report.reportedMessageContent && (
+                      <p className="mt-1 rounded-lg border border-surface-border bg-surface px-2 py-1 text-xs text-slate-500">
+                        Message signale : « {report.reportedMessageContent} »
+                      </p>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <Badge tone={STATUS_TONE[report.status]}>{report.status.replace('_', ' ')}</Badge>

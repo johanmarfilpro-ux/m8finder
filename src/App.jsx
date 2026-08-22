@@ -7,6 +7,8 @@ import RegisterPage from './pages/RegisterPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import SearchPage from './pages/SearchPage.jsx';
 import PlayerProfilePage from './pages/PlayerProfilePage.jsx';
+import MessagesPage from './pages/MessagesPage.jsx';
+import ConversationPage from './pages/ConversationPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 
@@ -24,6 +26,8 @@ export default function App() {
             <Route path="/recherche" element={<SearchPage />} />
             <Route path="/profil" element={<ProfilePage />} />
             <Route path="/joueurs/:userId" element={<PlayerProfilePage />} />
+            <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/messages/:conversationId" element={<ConversationPage />} />
           </Route>
 
           <Route element={<ProtectedRoute adminOnly />}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
+import { useDatabase } from '../../hooks/useDatabase.js';
 import Button from '../common/Button.jsx';
 import NotificationBell from './NotificationBell.jsx';
 import AvailabilityToggle from './AvailabilityToggle.jsx';
@@ -52,9 +53,11 @@ function CloseIcon() {
 
 export default function Navbar() {
   const { currentUser, isAuthenticated, isAdmin, logout } = useAuth();
+  const { unreadMessages } = useDatabase();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const unreadMessageCount = isAuthenticated ? unreadMessages.length : 0;
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -80,6 +83,14 @@ export default function Navbar() {
           <nav className="hidden items-center gap-1 sm:flex">
             <NavLink to="/recherche" className={linkClassName}>
               Rechercher
+            </NavLink>
+            <NavLink to="/messages" className={linkClassName}>
+              Messages
+              {unreadMessageCount > 0 && (
+                <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold text-white">
+                  {unreadMessageCount}
+                </span>
+              )}
             </NavLink>
             <NavLink to="/profil" className={linkClassName}>
               Mon profil
@@ -129,6 +140,14 @@ export default function Navbar() {
           <nav className="flex flex-col gap-1">
             <NavLink to="/recherche" className={mobileLinkClassName}>
               Rechercher
+            </NavLink>
+            <NavLink to="/messages" className={mobileLinkClassName}>
+              Messages
+              {unreadMessageCount > 0 && (
+                <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold text-white">
+                  {unreadMessageCount}
+                </span>
+              )}
             </NavLink>
             <NavLink to="/profil" className={mobileLinkClassName}>
               Mon profil
