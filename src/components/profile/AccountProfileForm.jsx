@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Button from '../common/Button.jsx';
 import FormField, { inputClassName } from '../common/FormField.jsx';
 import ProfileBanner from './ProfileBanner.jsx';
+import BannerCropModal from './BannerCropModal.jsx';
 import { useToast } from '../../hooks/useToast.js';
 import { useDatabase } from '../../hooks/useDatabase.js';
 import { BANNER_PRESETS, DEFAULT_BANNER_PRESET_ID } from '../../data/constants.js';
@@ -21,6 +22,7 @@ const MAX_BANNER_SIZE_BYTES = 4 * 1024 * 1024;
 export default function AccountProfileForm({ initialProfile, onSubmit, isSubmitting }) {
   const [formState, setFormState] = useState({ ...emptyProfile, ...initialProfile });
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [pendingBannerFile, setPendingBannerFile] = useState(null);
   const { uploadBannerImage } = useDatabase();
   const { showToast } = useToast();
 
@@ -32,7 +34,7 @@ export default function AccountProfileForm({ initialProfile, onSubmit, isSubmitt
     setFormState((prev) => ({ ...prev, bannerType: 'COLOR', bannerColor: presetId }));
   }
 
-  async function handleBannerFileChange(event) {
+  function handleBannerFileChange(event) {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
@@ -46,9 +48,15 @@ export default function AccountProfileForm({ initialProfile, onSubmit, isSubmitt
       return;
     }
 
+    setPendingBannerFile(file);
+  }
+
+  async function handleCropConfirm(croppedBlob) {
+    setPendingBannerFile(null);
     setIsUploadingBanner(true);
     try {
-      const url = await uploadBannerImage(file);
+      const croppedFile = new File([croppedBlob], 'banner.jpg', { type: 'image/jpeg' });
+      const url = await uploadBannerImage(croppedFile);
       setFormState((prev) => ({ ...prev, bannerType: 'IMAGE', bannerImageUrl: url }));
     } catch (error) {
       showToast(`Erreur lors de l'import de l'image : ${error.message}`, 'error');
@@ -154,6 +162,12 @@ export default function AccountProfileForm({ initialProfile, onSubmit, isSubmitt
       <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? 'Enregistrement...' : 'Enregistrer mon profil'}
       </Button>
+
+      <BannerCropModal
+        file={pendingBannerFile}
+        onConfirm={handleCropConfirm}
+        onCancel={() => setPendingBannerFile(null)}
+      />
     </form>
   );
 }
