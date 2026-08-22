@@ -22,8 +22,9 @@ const MAX_BANNER_SIZE_BYTES = 4 * 1024 * 1024;
 export default function AccountProfileForm({ initialProfile, onSubmit, isSubmitting }) {
   const [formState, setFormState] = useState({ ...emptyProfile, ...initialProfile });
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [bannerStatusLabel, setBannerStatusLabel] = useState('Import...');
   const [pendingBannerFile, setPendingBannerFile] = useState(null);
-  const { uploadBannerImage } = useDatabase();
+  const { uploadBannerImage, moderateBannerImage } = useDatabase();
   const { showToast } = useToast();
 
   function updateField(field) {
@@ -55,8 +56,17 @@ export default function AccountProfileForm({ initialProfile, onSubmit, isSubmitt
     setPendingBannerFile(null);
     setIsUploadingBanner(true);
     try {
+      setBannerStatusLabel('Import...');
       const croppedFile = new File([croppedBlob], 'banner.jpg', { type: 'image/jpeg' });
-      const url = await uploadBannerImage(croppedFile);
+      const { path, url } = await uploadBannerImage(croppedFile);
+
+      setBannerStatusLabel('Verification...');
+      const moderation = await moderateBannerImage(path);
+      if (!moderation.allowed) {
+        showToast("Image refusee : contenu inapproprie detecte par la moderation automatique. Choisis-en une autre.", 'error');
+        return;
+      }
+
       setFormState((prev) => ({ ...prev, bannerType: 'IMAGE', bannerImageUrl: url }));
     } catch (error) {
       showToast(`Erreur lors de l'import de l'image : ${error.message}`, 'error');
@@ -95,7 +105,7 @@ export default function AccountProfileForm({ initialProfile, onSubmit, isSubmitt
                 : 'border border-surface-border text-slate-300 hover:text-slate-100'
             }`}
           >
-            {isUploadingBanner ? 'Import...' : 'Image'}
+            {isUploadingBanner ? bannerStatusLabel : 'Image'}
             <input
               type="file"
               accept="image/*"

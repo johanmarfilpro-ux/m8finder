@@ -338,10 +338,17 @@ export function DatabaseProvider({ children }) {
         .upload(path, file, { cacheControl: '3600', upsert: true });
       if (error) throw new Error(error.message);
       const { data } = supabase.storage.from('banners').getPublicUrl(path);
-      return data.publicUrl;
+      return { path, url: data.publicUrl };
     },
     [currentUser]
   );
+
+  const moderateBannerImage = useCallback(async (path) => {
+    const { data, error } = await supabase.functions.invoke('moderate-banner', { body: { path } });
+    if (error) throw new Error(error.message);
+    if (data?.error) throw new Error(data.error);
+    return data;
+  }, []);
 
   const setAvailability = useCallback(
     async (userId, isAvailable) => {
@@ -601,6 +608,7 @@ export function DatabaseProvider({ children }) {
       getGameProfile,
       upsertProfile,
       uploadBannerImage,
+      moderateBannerImage,
       setAvailability,
       upsertGameProfile,
       deleteGameProfile,
@@ -638,6 +646,7 @@ export function DatabaseProvider({ children }) {
       getGameProfile,
       upsertProfile,
       uploadBannerImage,
+      moderateBannerImage,
       setAvailability,
       upsertGameProfile,
       deleteGameProfile,
