@@ -36,7 +36,7 @@ export default function AvailabilityToggle() {
       }`}
     >
       <span className={`h-2 w-2 rounded-full ${profile.isAvailable ? 'bg-emerald-400' : 'bg-slate-500'}`} />
-      <span className="hidden sm:inline">{profile.isAvailable ? 'Disponible' : 'Indisponible'}</span>
+      <span>{profile.isAvailable ? 'Disponible' : 'Indisponible'}</span>
     </button>
   );
 }
